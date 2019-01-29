@@ -17,10 +17,7 @@ namespace FileSplitterExtensions
     {
         public bool Equals(byte[] x, byte[] y)
         {
-            if (x == null || y == null)
-                return x == y;
-            else
-                return x.SequenceEqual(y);
+            return (x == null || y == null) ? x == y : x.SequenceEqual(y);
         }
 
         public int GetHashCode(byte[] obj)
@@ -62,13 +59,19 @@ namespace FileSplitterExtensions
         /// <summary>
         /// Whether or not the user's system supports the better folder browser found in Microsoft.WindowsAPICodePack.Dialogs
         /// </summary>
-        public static bool CanUseBetterFolderBrowser => Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 6;
+        public static bool CanUseBetterFolderBrowser
+        {
+            get
+            {
+                return Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 6;
+            }
+        }
 
         /// <summary>
         /// Delegate matching the internal System.IO.PatternMatcher.StrictMatchPattern method
         /// </summary>
-        /// <param name="expression">Expression to check againt</param>
-        /// <param name="name">Input filename</param>
+        /// <param name="expression">Filter expression to check against</param>
+        /// <param name="name">Filename/Path</param>
         /// <returns>Whether or not the input matched the expression</returns>
         public delegate bool StrictMatchPatternDelegate(string expression, string name);
         /// <summary>
@@ -141,6 +144,8 @@ namespace FileSplitterExtensions
         #region BinaryReader
         public static string ReadString(this BinaryReader br, int count) => new string(br.ReadChars(count));
         
+        //TODO add generic read method
+
         #region Little Endian Peek
         /*TODO merge code behind the scenes...?
         private static T Peek<T>() where T : struct
