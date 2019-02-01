@@ -3,6 +3,13 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageId>FilePhoenixExtensions_Brayconn</PackageId>
+    <Authors>Brayconn</Authors>
+    <Company />
+    <PackageTags>Extension FilePhoenix File IO BinaryReader BitConverter</PackageTags>
+    <RepositoryUrl>https://github.com/Brayconn/FilePhoenix/tree/master/FilePhoenixExtensions</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/Brayconn/FilePhoenix</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
