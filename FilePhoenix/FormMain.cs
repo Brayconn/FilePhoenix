@@ -199,7 +199,7 @@ namespace FilePhoenix
         private void directoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string selectedFolder = null;
-            if (FileSplitterExtensions.HelperMethods.CanUseBetterFolderBrowser)
+            if (FilePhoenixExtensions.HelperMethods.CanUseBetterFolderBrowser)
             {
                 using (CommonOpenFileDialog folderPicker = new CommonOpenFileDialog()
                 {

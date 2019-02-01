@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
-using static FileSplitterExtensions.HelperMethods;
+using static FilePhoenixExtensions.HelperMethods;
 
 namespace FileSplitter
 {

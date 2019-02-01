@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using FileSplitter;
-using FileSplitterExtensions;
+using FilePhoenixExtensions;
 
 namespace FilePhoenix.FileTypes
 {

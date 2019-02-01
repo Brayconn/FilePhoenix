@@ -105,9 +105,9 @@
       <Project>{3E605FB7-EB8F-48F4-82A3-53DBF36C1D8E}</Project>
       <Name>FileMerger</Name>
     </ProjectReference>
-    <ProjectReference Include="..\FileSplitterExtensions\FileSplitterExtensions.csproj">
-      <Project>{66f37dcf-538b-42d1-beb9-c27c898ccc95}</Project>
-      <Name>FileSplitterExtensions</Name>
+    <ProjectReference Include="..\FilePhoenixExtensions\FilePhoenixExtensions.csproj">
+      <Project>{44d57263-b57a-4e6b-ac13-b0a9ec129d5e}</Project>
+      <Name>FilePhoenixExtensions</Name>
     </ProjectReference>
     <ProjectReference Include="..\FileSplitter\FileSplitter.csproj">
       <Project>{8bd21383-f6ae-4de9-8b0f-1733ecc640df}</Project>

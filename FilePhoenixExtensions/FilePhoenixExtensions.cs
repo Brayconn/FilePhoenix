@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 //TODO invesitgate using this for faster BigEndian conversions?
 //using static System.Net.IPAddress;
 
-namespace FileSplitterExtensions
+namespace FilePhoenixExtensions
 {
     /// <summary>
     /// Equality comparer for making byte[] comparisons actually work
@@ -140,10 +140,10 @@ namespace FileSplitterExtensions
     /// Provides extension methods to aid in parsing binary data
     /// </summary>
     public static class ExtensionMethods
-    {        
+    {
         #region BinaryReader
         public static string ReadString(this BinaryReader br, int count) => new string(br.ReadChars(count));
-        
+
         //TODO add generic read method
 
         #region Little Endian Peek
@@ -233,7 +233,7 @@ namespace FileSplitterExtensions
         //TODO Optimize BigEndian Reads
         public static short ReadInt16M(this BinaryReader br)
         {
-            return BitConverter.ToInt16(br.ReadBytes(2).Reverse().ToArray(),0);
+            return BitConverter.ToInt16(br.ReadBytes(2).Reverse().ToArray(), 0);
         }
         public static ushort ReadUInt16M(this BinaryReader br)
         {
@@ -323,11 +323,11 @@ namespace FileSplitterExtensions
 
         public static T ConvertTo<T>(this byte[] value, bool bigEndian = false) where T : struct
         {
-            return HelperMethods.BitConverterDict[typeof(T)](HelperMethods.BigEndianProcess(value,bigEndian));
+            return HelperMethods.BitConverterDict[typeof(T)](HelperMethods.BigEndianProcess(value, bigEndian));
         }
         public static dynamic ConvertTo(this byte[] value, Type T, bool bigEndian = false)
         {
-            return HelperMethods.BitConverterDict[T](HelperMethods.BigEndianProcess(value,bigEndian));
+            return HelperMethods.BitConverterDict[T](HelperMethods.BigEndianProcess(value, bigEndian));
         }
         public static byte[] GetBytes<T>(this T value, bool bigEndian = false) where T : struct
         {
