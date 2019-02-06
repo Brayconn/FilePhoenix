@@ -1,15 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <PackageId>FilePhoenixExtensions_Brayconn</PackageId>
+    <PackageId>Brayconn.FilePhoenix.Extensions</PackageId>
     <Authors>Brayconn</Authors>
     <Company />
-    <PackageTags>Extension FilePhoenix File IO BinaryReader BitConverter</PackageTags>
-    <RepositoryUrl>https://github.com/Brayconn/FilePhoenix/tree/master/FilePhoenixExtensions</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
+    <PackageTags>Extension FilePhoenix File IO BinaryReader BitConverter Dynamic Generic</PackageTags>
+    <RepositoryUrl></RepositoryUrl>
+    <RepositoryType></RepositoryType>
     <PackageProjectUrl>https://github.com/Brayconn/FilePhoenix</PackageProjectUrl>
+    <Description>Set of extension methods/properties that make File IO easier.</Description>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <Copyright>Copyright 2019</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

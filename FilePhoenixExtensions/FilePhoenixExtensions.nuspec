@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$PackageId$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$Authors$</authors>
+    <owners>$Authors$</owners>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/Brayconn/FilePhoenix</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2019</copyright>
+    <tags>$PackageTags$</tags>
+  </metadata>
+</package>
