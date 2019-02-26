@@ -20,6 +20,8 @@ using static FilePhoenixExtensions.HelperMethods;
 
 namespace FileSplitter
 {
+    #region Enums
+
     /// <summary>
     /// Specifies how a FileFragment conforms to a given file format's specification.
     /// </summary>
@@ -88,6 +90,8 @@ namespace FileSplitter
         AfterChanges,
         OnSave
     }
+
+    #endregion
 
     /*TODO maybe turn FileFragmentReferences into classes so this can be inherited from?
     public class Variables : IEnumerable<KeyValuePair<string,object>>
@@ -262,12 +266,24 @@ namespace FileSplitter
         void PostSave(string filename);
     }
 
+    /// <summary>
+    /// Used to update any progress bar attached to this FileSplitter instance
+    /// </summary>
     public class FileSplitterProgressInfo
     {
+        /// <summary>
+        /// Description of the current method being run
+        /// </summary>
         public string MethodDescription { get; private set; }
 
+        /// <summary>
+        /// Description of the specific action inside the method being run
+        /// </summary>
         public string ProgressDescription { get; private set; }
 
+        /// <summary>
+        /// How far along this oprtation is, between 0 and 100
+        /// </summary>
         public int ProgressPercentage { get; private set; }
 
         public FileSplitterProgressInfo(string methodDescription, string progressDescription, int progressPercentage)
@@ -278,6 +294,9 @@ namespace FileSplitter
         }
     }
 
+    /// <summary>
+    /// The big one. Splits an input file into many SubFiles
+    /// </summary>
     public class FileSplitter : IDisposable
     {
         #region Saftey Checks
@@ -979,7 +998,7 @@ namespace FileSplitter
         private static void ClearDirectory(string target)
         {
             if (new DirectoryInfo(target).Attributes.HasFlag(FileAttributes.System))
-                throw new FieldAccessException("No, you can't delete System32 using FilePhoenix.");
+                throw new IOException("No, you can't delete System32 using FileSplitter.");
             foreach (var directory in Directory.EnumerateDirectories(target))
                 Directory.Delete(directory);
             foreach (var file in Directory.EnumerateFiles(target))
