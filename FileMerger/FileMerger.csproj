@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="FileMerger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SubFile.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
