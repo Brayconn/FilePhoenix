@@ -938,7 +938,7 @@ namespace FileSplitter
         /// <summary>
         /// Initilizes a FileSplitter using only modules from the exe
         /// </summary>
-        public FileSplitter(Progress<FileSplitterProgressInfo> progress = null) : this(true, null, null, progress) { } /*HACK that cast tho...*/
+        public FileSplitter(Progress<FileSplitterProgressInfo> progress = null) : this(true, null, null, progress) { }
         public FileSplitter(bool autoLoad, Type[] modules, Progress<FileSplitterProgressInfo> progress = null) : this(autoLoad, modules, null, progress) { }
         public FileSplitter(bool autoLoad, string[] pluginFolders, Progress<FileSplitterProgressInfo> progress = null) : this(autoLoad, null, pluginFolders, progress) { }
         /// <summary>
