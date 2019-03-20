@@ -51,13 +51,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileFragment.cs" />
     <Compile Include="FilenameManager.cs" />
     <Compile Include="FileSplitter.cs" />
     <Compile Include="FileTypes\GraphicsInterchangeFormat.cs" />
     <Compile Include="FileTypes\Icon.cs" />
     <Compile Include="FileTypes\ISOBaseMediaFormat.cs" />
     <Compile Include="FileTypes\NetworkGraphics.cs" />
+    <Compile Include="IFileSplitterModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertyGridStuff.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FilePhoenixExtensions\FilePhoenixExtensions.csproj">

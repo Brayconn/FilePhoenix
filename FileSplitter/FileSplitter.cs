@@ -1,21 +1,17 @@
-﻿#define debug
+﻿#define CRASH_ON_VALIDITY_FAILURE
 
-using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing.Design;
 using System.Dynamic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows.Forms.Design;
 using static FilePhoenixExtensions.HelperMethods;
 
 namespace FileSplitter
@@ -91,180 +87,7 @@ namespace FileSplitter
         OnSave
     }
 
-    #endregion
-
-    /*TODO maybe turn FileFragmentReferences into classes so this can be inherited from?
-    public class Variables : IEnumerable<KeyValuePair<string,object>>
-    {
-        public dynamic variables;
-
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => ((IDictionary<string, object>)variables).GetEnumerator();
-
-        public void Add(string key, object value) => ((IDictionary<string, object>)variables).Add(key, value);
-        public void Add(string key, object value) => ((IDictionary<string, object>)variables).Add(key, value);
-    };
-    */
-    //TODO better idea: make both FileFragment and FileFragmentReference abstract, then let each module have its own implementation if they need.
-
-    /// <summary>
-    /// Contains information about an exported file fragment
-    /// </summary>
-    public class FileFragment : IEnumerable<KeyValuePair<string, object>>
-    {
-        /// <summary>
-        /// Fullpath of the file this FileFragment represents
-        /// </summary>
-        public string Path { get; set; }
-        /// <summary>
-        /// Description of the data contained in the FileFragment
-        /// </summary>
-        public string Description { get; set; }
-        /// <summary>
-        /// The Validity of the file
-        /// </summary>
-        public Validity Validity { get; set; }
-        /// <summary>
-        /// Any extra variables a given IFileSplitterModule may want to access when validating
-        /// </summary>
-        public dynamic variables;
-
-        public FileFragment(string path)
-            : this(path, "", Validity.Unchecked) { }
-
-        public FileFragment(string path, string description)
-            : this(path, description, Validity.Unchecked) { }
-
-        public FileFragment(string path, string description, Validity validity)
-        {
-            this.Path = path;
-            this.Description = description;
-            this.Validity = validity;
-            this.variables = new ExpandoObject();
-        }
-
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => ((IDictionary<string, object>)variables).GetEnumerator();
-
-        public void Add(string key, object value) => ((IDictionary<string, object>)variables).Add(key, value);
-        public void Add(ExpandoObject values) => variables = values;
-    }
-
-    /// <summary>
-    /// Contains all information to export a part of the loaded file, and create a FileFragment
-    /// </summary>
-    public struct FileFragmentReference : IEnumerable<KeyValuePair<string, object>>
-    {
-        /// <summary>
-        /// The offset within the base file where the reference's data can be found
-        /// </summary>
-        public readonly ulong offset;
-        /// <summary>
-        /// The length of the data in the reference
-        /// </summary>
-        public readonly ulong length;
-        /// <summary>
-        /// The fullpath to the file this reference should be exported to, not including a root directory
-        /// </summary>
-        public readonly string[] filename;
-        /// <summary>
-        /// The validity of this reference
-        /// </summary>
-        public readonly Validity validity;
-        /// <summary>
-        /// Description of the data contained in the reference
-        /// </summary>
-        public readonly string description;
-        /// <summary>
-        /// Any extra variables a given IFileSplitter may want to access during validation
-        /// </summary>
-        public dynamic variables;
-
-        #region Constructors
-
-        public FileFragmentReference(long offset, long length, string[] filename)
-                              : this((ulong)offset, (ulong)length, filename) { }
-        public FileFragmentReference(ulong offset, ulong length, string[] filename)
-                              : this(offset, length, filename, Validity.Unchecked, "") { }
-
-        public FileFragmentReference(long offset, long length, string[] filename, Validity validity)
-                              : this((ulong)offset, (ulong)length, filename, validity) { }
-        public FileFragmentReference(ulong offset, ulong length, string[] filename, Validity validity)
-                              : this(offset, length, filename, validity, "") { }
-
-        public FileFragmentReference(long offset, long length, string[] filename, string description)
-                              : this((ulong)offset, (ulong)length, filename, description) { }
-        public FileFragmentReference(ulong offset, ulong length, string[] filename, string description)
-                              : this(offset, length, filename, Validity.Unchecked, description) { }
-
-        public FileFragmentReference(long offset, long length, string[] filename, Validity validity, string description)
-                              : this((ulong)offset, (ulong)length, filename, validity, description) { }
-        public FileFragmentReference(ulong offset, ulong length, string[] filename, Validity validity, string description)
-        {
-            this.filename = filename;
-            this.offset = offset;
-            this.length = length;
-            this.validity = validity;
-            this.description = description;
-            this.variables = new ExpandoObject();
-        }
-
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => ((IDictionary<string, object>)variables).GetEnumerator();
-
-        public void Add(string key, object value) => ((IDictionary<string, object>)variables).Add(key, value);
-        public void Add(ExpandoObject values) => variables = values;
-        #endregion
-    }
-
-    /// <summary>
-    /// Represents a module that can parse and validate a certain file type
-    /// </summary>
-    public interface IFileSplitterModule
-    {
-        /// <summary>
-        /// The name of this Module. Should be non-browsable
-        /// </summary>
-        string DisplayName { get; }
-        /// <summary>
-        /// Any applicable SaveFileDialog filters. Should be non-browsable
-        /// </summary>
-        ReadOnlyCollection<string> SaveFileDialogFilters { get; }
-        /// <summary>
-        /// Any applicable OpenFileDialog filters. Should be non-browsable
-        /// </summary>
-        ReadOnlyCollection<string> OpenFileDialogFilters { get; }
-
-        /// <summary>
-        /// Whether or not this module uses Variables. If false, all operations relating to Variables will be skipped
-        /// </summary>
-        bool UsesVariables { get; }
-
-        /// <summary>
-        /// Parses the given file to the given output. Modules may also use this function to do holistic operations (such as decryption) on the given file
-        /// </summary>
-        /// <param name="filename">The file to parse</param>
-        /// <param name="output">The list to parse to</param>
-        void ParseTo(string filename, ref List<FileFragmentReference> output); //TODO add functionality for errors that can continue?
-        /// <summary>
-        /// Updates the variables of the FileFragment at the given index
-        /// </summary>
-        /// <param name="list">The list containing the FileFragment that needs its variables updated</param>
-        /// <param name="index">The index of the FileFragment that needs its variables updated</param>
-        /// <returns>How many items had their variables edited</returns>
-        bool UpdateVariables(IList<FileFragment> list, ref int index, ref List<int> changed);
-        /// <summary>
-        /// Updates the validity of the FileFragment at the given index
-        /// </summary>
-        /// <param name="list">The list containing the FileFragment that needs its validity updated</param>
-        /// <param name="index">The index of the FileFragment that needs its validity updated</param>
-        void UpdateValidity(IList<FileFragment> list, int index); //TODO bring back ref so the module can skip ahead?
-        /// <summary>
-        /// Does any last holistic operation (such as encrypting) needed to make a saved file valid. 
-        /// </summary>
-        /// <param name="filename">The file the module can edit</param>
-        void PostSave(string filename);
-    }
+#endregion
 
     /// <summary>
     /// Used to update any progress bar attached to this FileSplitter instance
@@ -297,7 +120,7 @@ namespace FileSplitter
     /// <summary>
     /// The big one. Splits an input file into many SubFiles
     /// </summary>
-    public class FileSplitter : IDisposable
+    public partial class FileSplitter : IDisposable
     {
         #region Saftey Checks
 
@@ -382,37 +205,7 @@ namespace FileSplitter
         #endregion
         
         #region File opening
-
-        private class OpenFileNameEditor : UITypeEditor
-        {
-            public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context) => UITypeEditorEditStyle.Modal;
-
-            public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)
-            {
-                if (!(context.Instance is FileSplitter parent) || context == null || provider == null)
-                    return base.EditValue(context, provider, value);
-
-                using (OpenFileDialog ofd = new OpenFileDialog()
-                {
-                    Title = context.PropertyDescriptor.DisplayName,
-                    Filter = string.Join("|", (parent.FileTypeModule?.OpenFileDialogFilters
-                        ?? new ReadOnlyCollection<string>(new string[0])).Concat(new string[] { "All Files (*.*)|*.*" })),
-                })
-                {
-                    ofd.FileName = value as string ?? ofd.FileName;
-
-                    if (ofd.ShowDialog() == DialogResult.OK
-                        && (parent.FileLoaded //TODO this is a mess of conditionals
-                        ? MessageBox.Show("Changing this setting will result in a loss of all current progress, " +
-                        "are you sure you want to change it?", "Warning", MessageBoxButtons.YesNo) == DialogResult.Yes
-                        : true))
-                    {
-                        value = ofd.FileName;
-                    }
-                }
-                return value;
-            }
-        }
+        
         string _openedFile;
         [Category("General"), Description("The opened file"), Editor(typeof(OpenFileNameEditor), typeof(UITypeEditor))]
         public string OpenedFile
@@ -432,42 +225,7 @@ namespace FileSplitter
         #endregion
 
         #region Module Selector
-
-        private class FileSplitterModuleTypeConverter : ExpandableObjectConverter
-        {
-            public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => true;
-
-            public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
-            {
-                return (context.Instance is FileSplitter parent)
-                    ? new StandardValuesCollection(parent.LoadedModules.Keys)
-                    : base.GetStandardValues(context);
-            }
-
-            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-            {
-                return (sourceType == typeof(string)) || base.CanConvertFrom(context, sourceType);
-            }
-
-            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-            {
-                return (value is string input && context.Instance is FileSplitter parent && parent.LoadedModules.ContainsKey(input))
-                        ? (IFileSplitterModule)Activator.CreateInstance(parent.LoadedModules[input])
-                        : null; //TODO maybe reconsider using this again? base.ConvertFrom(context, culture, value);
-            }
-
-            public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-            {
-                return (destinationType == typeof(string)) || base.CanConvertFrom(context, destinationType);
-            }
-
-            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
-            {
-                return (value is IFileSplitterModule module)
-                    ? module.DisplayName
-                    : base.ConvertTo(context, culture, value, destinationType);
-            }
-        }
+        
         private IFileSplitterModule _FileTypeModule;
         [Category("General"), Description("What file type to treat the given file as"), TypeConverter(typeof(FileSplitterModuleTypeConverter))]
         public IFileSplitterModule FileTypeModule
@@ -494,35 +252,7 @@ namespace FileSplitter
 
         private FileSystemWatcher WorkingDirectoryWatcher;
         string _workingDirectory;
-        class OpenFolderNameEditor : FolderNameEditor
-        {
-            public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)
-            {
-                //TODO check ?.
-                if (context?.Instance == null || provider == null || !CanUseBetterFolderBrowser)
-                    return base.EditValue(context, provider, value);
-
-                using (CommonOpenFileDialog folderPicker = new CommonOpenFileDialog()
-                {
-                    IsFolderPicker = true
-                })
-                {
-                    if (value.GetType() == typeof(string))
-                        folderPicker.InitialDirectory = Path.GetDirectoryName((string)value);
-
-                    //TODO another mess of conditionals
-                    if (folderPicker.ShowDialog() == CommonFileDialogResult.Ok &&
-                        (Directory.EnumerateFileSystemEntries(folderPicker.FileName).Any() ?
-                        MessageBox.Show("The contents of the selected folder will be deleted if/when a file is loaded. " +
-                        "Are you sure you want to continue?", "Warning", MessageBoxButtons.YesNo) == DialogResult.Yes
-                        : true))
-                    {
-                        value = folderPicker.FileName;
-                    }
-                }
-                return value;
-            }
-        }
+        
         [Category("General"), Description("The directory where the contents of the opened file will be dumped"), Editor(typeof(OpenFolderNameEditor), typeof(UITypeEditor))]
         public string WorkingDirectory
         {
@@ -693,33 +423,7 @@ namespace FileSplitter
         #endregion
 
         #region Auto-Save Path
-
-        class SaveFileNameEditor : UITypeEditor
-        {
-            public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context) => UITypeEditorEditStyle.Modal;
-
-            public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)
-            {
-                if (!(context.Instance is FileSplitter parent) || context == null || provider == null)
-                    return base.EditValue(context, provider, value);
-
-                using (SaveFileDialog sfd = new SaveFileDialog()
-                {
-                    Title = context.PropertyDescriptor.DisplayName,
-                    //Join the SaveFileDialogFilters if they exist, either way, add "All Files (*.*)|*.* to the end
-                    Filter = string.Join("|", (parent.FileTypeModule?.SaveFileDialogFilters
-                        ?? new ReadOnlyCollection<string>(new string[0])).Concat(new string[] { "All Files (*.*)|*.*" })),
-                })
-                {
-                    sfd.FileName = value as string ?? sfd.FileName;
-
-                    if (sfd.ShowDialog() == DialogResult.OK)
-                        value = sfd.FileName;
-                }
-
-                return value;
-            }
-        }
+                
         [Category("Auto-saving"), Description("The file that will be auto-saved to"), Editor(typeof(SaveFileNameEditor), typeof(UITypeEditor))]
         public string AutoSavePath { get; set; } //TODO consider limiting to anything but the working directory (startswith)
 
@@ -734,17 +438,7 @@ namespace FileSplitter
         #endregion
 
         #region Blacklist
-
-        class BlackListTypeConverter : TypeConverter
-        {
-            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
-            {
-                return (destinationType == typeof(string) && value is IList<string> input)
-                ? string.Join(", ", input)
-                : base.ConvertTo(context, culture, value, destinationType);
-            }
-        }
-
+        
         //TODO implement other platforms
         private static readonly ReadOnlyDictionary<PlatformID, string[]> defaultBlacklists = new ReadOnlyDictionary<PlatformID, string[]>(new Dictionary<PlatformID, string[]>()
         {
@@ -916,14 +610,14 @@ namespace FileSplitter
                     WorkingDirectoryWatcher.EnableRaisingEvents = false;
                 bool succeeded = false;
                 //HACK? The idea is that if something goes wrong here the program needn't nessecarily crash...
-#if !debug
+#if !CRASH_ON_VALIDITY_FAILURE
                 try
                 {
 #endif
                     progressReporter?.Report(new FileSplitterProgressInfo("Re-Validating...", $"{VirtualFile.Values[i].Path} In Progress...", (i + 1) * 100 / ffs.Count));
                     FileTypeModule.UpdateValidity(VirtualFile.Values, ffs[i]);
                     succeeded = true;
-#if !debug
+#if !CRASH_ON_VALIDITY_FAILURE
                 }
                 catch (Exception e)
                 {
@@ -1330,6 +1024,7 @@ namespace FileSplitter
 
         #region Disposing
 
+        [Browsable(false)]
         public bool IsDisposed { get; private set; }
 
         ~FileSplitter()
