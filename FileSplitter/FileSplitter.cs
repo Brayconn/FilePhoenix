@@ -743,7 +743,7 @@ namespace FileSplitter
                         progressReporter?.Report(new FileSplitterProgressInfo("Saving files to working directory...", filenames[i], (i + 1) * 100 / files.Count));
 
                         //Automatically creates any subdirectories needed (including the working directory, if it doesn't already exist)
-                        Directory.CreateDirectory(Path.GetDirectoryName(filenames[i]));
+                        Directory.CreateDirectory(Path.GetDirectoryName(files[i].Path = filenames[i]));
 
                         //HACK trying to account for ulongs is annoying
                         //ulong seek
@@ -755,7 +755,7 @@ namespace FileSplitter
                                 bw.Write(br.ReadByte());
 
                         //Add the file
-                        VirtualFile.Add(filenames[i], new FileFragment(filenames[i], files[i].description, files[i].validity) { (ExpandoObject)files[i].variables });
+                        VirtualFile.Add(filenames[i], files[i]);
                     }
                 }
                 //Don't need to keep the temp file anymore
