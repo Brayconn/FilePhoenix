@@ -694,7 +694,7 @@ namespace FileSplitter
             if (new DirectoryInfo(target).Attributes.HasFlag(FileAttributes.System))
                 throw new IOException("No, you can't delete System32 using FileSplitter.");
             foreach (var directory in Directory.EnumerateDirectories(target))
-                Directory.Delete(directory);
+                Directory.Delete(directory,true);
             foreach (var file in Directory.EnumerateFiles(target))
                 File.Delete(file);
         }
