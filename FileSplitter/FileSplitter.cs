@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing.Design;
-using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -694,7 +693,7 @@ namespace FileSplitter
             if (new DirectoryInfo(target).Attributes.HasFlag(FileAttributes.System))
                 throw new IOException("No, you can't delete System32 using FileSplitter.");
             foreach (var directory in Directory.EnumerateDirectories(target))
-                Directory.Delete(directory);
+                Directory.Delete(directory,true);
             foreach (var file in Directory.EnumerateFiles(target))
                 File.Delete(file);
         }
@@ -743,7 +742,7 @@ namespace FileSplitter
                         progressReporter?.Report(new FileSplitterProgressInfo("Saving files to working directory...", filenames[i], (i + 1) * 100 / files.Count));
 
                         //Automatically creates any subdirectories needed (including the working directory, if it doesn't already exist)
-                        Directory.CreateDirectory(Path.GetDirectoryName(filenames[i]));
+                        Directory.CreateDirectory(Path.GetDirectoryName(files[i].Path = filenames[i]));
 
                         //HACK trying to account for ulongs is annoying
                         //ulong seek
@@ -755,7 +754,7 @@ namespace FileSplitter
                                 bw.Write(br.ReadByte());
 
                         //Add the file
-                        VirtualFile.Add(filenames[i], new FileFragment(filenames[i], files[i].description, files[i].validity) { (ExpandoObject)files[i].variables });
+                        VirtualFile.Add(filenames[i], files[i]);
                     }
                 }
                 //Don't need to keep the temp file anymore

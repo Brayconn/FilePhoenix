@@ -45,6 +45,21 @@ namespace FilePhoenix.FileTypes
             Data
         }
         
+        class ISOFileFragment : FileFragmentReference
+        {
+            public ISOFileFragment(long offset, long length, string[] filename, Validity validity, string description, int boxNumber, BoxTypes boxType)
+                : this((ulong)offset, (ulong)length, filename, validity, description, boxNumber, boxType) { }
+            public ISOFileFragment(ulong offset, ulong length, string[] filename, Validity validity, string description, int boxNumber, BoxTypes boxType)
+                : base(offset,length,filename,validity,description)
+            {
+                BoxNumber = boxNumber;
+                BoxType = boxType;
+            }
+
+            public int BoxNumber { get; set; }
+            public BoxTypes BoxType { get; set; }
+        }
+
         //TODO expand to be closer to NetworkGraphics levels of completeness (dynamic parsing)
         public void ParseTo(string inputFilePath, ref List<FileFragmentReference> output)
         {
@@ -57,16 +72,16 @@ namespace FilePhoenix.FileTypes
 
                     long lengthOffset = br.BaseStream.Position;
                     uint lengthData = br.ReadUInt32M();
-                    output.Add(new FileFragmentReference(lengthOffset, 4,
+                    output.Add(new ISOFileFragment(lengthOffset, 4,
                         new string[] { $"Box {boxNumber}", "Length" }, Validity.Valid,
-                        $"Box {boxNumber} Length = {lengthData}"){ { "BoxNumber", boxNumber }, { "BoxType", BoxTypes.Length } });
+                        $"Box {boxNumber} Length = {lengthData}", boxNumber, BoxTypes.Length));
 
                     long typeOffset = br.BaseStream.Position;
                     string typeData = br.ReadString(4);
-                    output.Add(new FileFragmentReference(typeOffset, 4,
+                    output.Add(new ISOFileFragment(typeOffset, 4,
                         new string[] { $"Box {boxNumber}", "Type" },
                         (IsValidBoxType(typeData) ? Validity.Valid : Validity.HardInvalid),
-                        $"Box {boxNumber} Type = {typeData}") { { "BoxNumber", boxNumber }, { "BoxType", BoxTypes.Type } });
+                        $"Box {boxNumber} Type = {typeData}", boxNumber , BoxTypes.Type));
 
                     actualDataLength = lengthData - 8; //(Length of data) - (length of "Length" and "Type")
 
@@ -74,9 +89,9 @@ namespace FilePhoenix.FileTypes
                     {
                         long extLengthOffset = br.BaseStream.Position;
                         ulong extLengthData = br.ReadUInt64M();
-                        output.Add(new FileFragmentReference(extLengthOffset, 4,
+                        output.Add(new ISOFileFragment(extLengthOffset, 4,
                             new string[] { $"Box {boxNumber}", $"Extended Length" }, Validity.Valid,
-                            $"Box {boxNumber} Extended Length = {extLengthData}") { { "BoxNumber", boxNumber }, { "BoxType", BoxTypes.ExtendedLength } });
+                            $"Box {boxNumber} Extended Length = {extLengthData}", boxNumber, BoxTypes.ExtendedLength));
 
                         actualDataLength = extLengthData - 16; //Now we subtract extLength as well as Length and Type
                     }
@@ -90,17 +105,17 @@ namespace FilePhoenix.FileTypes
                     {
                         long extTypeOffset = br.BaseStream.Position;
                         Guid extTypeData = new Guid(br.ReadBytes(16));
-                        output.Add(new FileFragmentReference(extTypeOffset, 16,
+                        output.Add(new ISOFileFragment(extTypeOffset, 16,
                             new string[] { $"Box {boxNumber}", "Extended Type" },
                             (IsValidExtendedBoxType(extTypeData) ? Validity.Valid : Validity.HardInvalid),
-                            $"Box {boxNumber} GUID = {extTypeData.ToString()}") { { "BoxNumber", boxNumber }, { "BoxType", BoxTypes.ExtendedType} });
+                            $"Box {boxNumber} GUID = {extTypeData.ToString()}", boxNumber, BoxTypes.ExtendedType));
                         actualDataLength -= 16;
                     }
 
                     long dataOffset = br.BaseStream.Position;
-                    output.Add(new FileFragmentReference((ulong)dataOffset, actualDataLength,
+                    output.Add(new ISOFileFragment((ulong)dataOffset, actualDataLength,
                         new string[] { $"Box {boxNumber}", "Data" }, Validity.Valid,
-                        $"Box {boxNumber} Data length = {actualDataLength}") { { "BoxNumber", boxNumber }, { "BoxType", BoxTypes.Data } });
+                        $"Box {boxNumber} Data length = {actualDataLength}", boxNumber, BoxTypes.Data));
                     br.BaseStream.Position += (long)actualDataLength;
                 }
             }
@@ -117,23 +132,23 @@ namespace FilePhoenix.FileTypes
             //Default start
             if (index == 0)
             {
-                list[index].variables.BoxType = BoxTypes.Length;
-                list[index].variables.BoxNumber = 1;
+                (list[index] as ISOFileFragment).BoxType = BoxTypes.Length;
+                (list[index] as ISOFileFragment).BoxNumber = 1;
                 return false;
             }
             else
             {
                 //Shared between both cases
                 BoxTypes current = BoxTypes.Unknown;
-                BoxTypes prev = list[index - 1].variables.BoxType;
-                int boxNumber = list[index-1].variables.BoxNumber;
+                BoxTypes prev = (list[index - 1] as ISOFileFragment).BoxType;
+                int boxNumber = (list[index-1] as ISOFileFragment).BoxNumber;
 
                 //HACK abandon all (some) hope ye who enter here
                 //HACK it might be faster to just not have this first case, since it's only used once (if a file is created while enabled)
                 //If in the middle of list
                 if (index + 1 < list.Count)
                 {
-                    BoxTypes next = list[index + 1].variables.BoxType;
+                    BoxTypes next = (list[index + 1] as ISOFileFragment).BoxType;
                     //TODO maybe move to C# 7 and use "when"?
                     switch(prev)
                     {
@@ -214,7 +229,7 @@ namespace FilePhoenix.FileTypes
                             {
                                 case (8):
                                     //HACK just look at this. It basically has to validate the entire box before checking aaaaaaaaaaaaa
-                                    if (index >= 2 && list[index - 2].variables.BoxType == BoxTypes.Length //TODO isn't this (vvv) big endian???????
+                                    if (index >= 2 && (list[index - 2] as ISOFileFragment).BoxType == BoxTypes.Length //TODO isn't this (vvv) big endian???????
                                         && new FileInfo(list[index - 2].Path).Length == 4 && BinaryFileInterpreter.ReadFileAs<uint>(list[index - 2].Path) == 0)
                                         current = BoxTypes.ExtendedLength;
                                     else
@@ -245,8 +260,8 @@ namespace FilePhoenix.FileTypes
                     }
                 }
 
-                list[index].variables.BoxType = current;
-                list[index].variables.BoxNumber = boxNumber;
+                (list[index] as ISOFileFragment).BoxType = current;
+                (list[index] as ISOFileFragment).BoxNumber = boxNumber;
                 return false;
             }
         }
@@ -254,7 +269,7 @@ namespace FilePhoenix.FileTypes
         public void UpdateValidity(IList<FileFragment> list, int index)
         {
             //Switch based on box type
-            switch (list[index].variables.BoxType)
+            switch ((list[index] as ISOFileFragment).BoxType)
             {
                 //TODO length is super complicated with these, so I'll have to spend a good chunk of time to fix them
                 case (BoxTypes.Length): //length (uint)
@@ -269,10 +284,10 @@ namespace FilePhoenix.FileTypes
                         //TODO why did I have to rename these?!?!?!?!?!?!?!?!?!?!?!
                         uint lengthData1 = BinaryFileInterpreter.ReadFileAs<uint>(lengthPath, true);
                         
-                        if (list[index + 2].variables.BoxType == BoxTypes.ExtendedLength)
+                        if ((list[index + 2] as ISOFileFragment).BoxType == BoxTypes.ExtendedLength)
                         {
                             list[index].Validity = (lengthData1 == 1) ? Validity.Valid : Validity.HardInvalid;
-                            list[index].Description = $"Box {list[index].variables.BoxNumber} Length = <unknown>";
+                            list[index].Description = $"Box {(list[index] as ISOFileFragment).BoxNumber} Length = <unknown>";
                         }
                         else
                         {
@@ -284,13 +299,13 @@ namespace FilePhoenix.FileTypes
                                 i1++;
                                 ff1 = list[index + i1];
                                 correctLength1 += (ulong)new FileInfo(ff1.Path).Length;
-                            } while (ff1.variables.BoxType != BoxTypes.Data);
+                            } while ((ff1 as ISOFileFragment).BoxType != BoxTypes.Data);
 
                             //Assuming it did work, we can go as usual
                             list[index].Validity = (lengthData1 == correctLength1)
                                 ? Validity.Valid : Validity.HardInvalid;
                         }
-                        list[index].Description = $"Box {list[index].variables.BoxNumber} Length = {lengthData1}";
+                        list[index].Description = $"Box {(list[index] as ISOFileFragment).BoxNumber} Length = {lengthData1}";
                     }
                     break;
                 case (BoxTypes.Type): //type
@@ -299,7 +314,7 @@ namespace FilePhoenix.FileTypes
                         IsValidBoxType(typeData)
                         ? Validity.Valid
                         : Validity.HardInvalid;
-                    list[index].Description = $"Box {list[index].variables.BoxNumber} Type = {typeData}";
+                    list[index].Description = $"Box {(list[index] as ISOFileFragment).BoxNumber} Type = {typeData}";
                     break;
                 case (BoxTypes.ExtendedLength): //Extended Length (ulong)
                     //TODO implement extended length validation
@@ -310,7 +325,7 @@ namespace FilePhoenix.FileTypes
                         IsValidExtendedBoxType(extTypeData)
                         ? Validity.Valid
                         : Validity.HardInvalid;
-                    list[index].Description = $"Box {list[index].variables.BoxNumber} GUID = {extTypeData.ToString()}";
+                    list[index].Description = $"Box {(list[index] as ISOFileFragment).BoxNumber} GUID = {extTypeData.ToString()}";
                     break;
                 case (BoxTypes.Data): //data
                     //HACK this entire code is probably messy but hopefully actually works
@@ -327,11 +342,11 @@ namespace FilePhoenix.FileTypes
                         correctLength += (ulong)new FileInfo(ff.Path).Length;
 
                         //Save the first length or extended length box we find
-                        if (lengthToEdit == null && (ff.variables.BoxType == BoxTypes.Length || ff.variables.BoxType == BoxTypes.ExtendedLength))
+                        if (lengthToEdit == null && ((ff as ISOFileFragment).BoxType == BoxTypes.Length || (ff as ISOFileFragment).BoxType == BoxTypes.ExtendedLength))
                             lengthToEdit = ff;
-                    } while (ff.variables.BoxType != BoxTypes.Length);
+                    } while ((ff as ISOFileFragment).BoxType != BoxTypes.Length);
 
-                    bool isExtended = (lengthToEdit.variables.BoxType == BoxTypes.ExtendedLength); //Storing this since it's used twice
+                    bool isExtended = ((lengthToEdit as ISOFileFragment).BoxType == BoxTypes.ExtendedLength); //Storing this since it's used twice
 
                     /*
                     ulong lengthData = isExtended
@@ -348,12 +363,12 @@ namespace FilePhoenix.FileTypes
                         File.WriteAllBytes(lengthToEdit.Path, bytesToWrite.Reverse().ToArray());
                         lengthData = correctLength;
                         lengthToEdit.Validity = Validity.Valid;
-                        lengthToEdit.Description = $"Box {lengthToEdit.variables.BoxNumber} Length = {correctLength}";
+                        lengthToEdit.Description = $"Box {(lengthToEdit as ISOFileFragment).BoxNumber} Length = {correctLength}";
                     }
                     list[index].Validity = (lengthData == correctLength)
                         ? Validity.Valid
                         : Validity.HardInvalid;
-                    list[index].Description = $"Box {list[index].variables.BoxNumber} Data length = {dataLength}";
+                    list[index].Description = $"Box {(list[index] as ISOFileFragment).BoxNumber} Data length = {dataLength}";
 
                     break;
             }
@@ -382,8 +397,8 @@ namespace FilePhoenix.FileTypes
                     box = BoxTypes.Data;
                     break;
             }
-            list[index].variables.BoxType = box;
-            list[index].variables.BoxNumber = (index / 3) + 1;
+            (list[index] as ISOFileFragment).BoxType = box;
+            (list[index] as ISOFileFragment).BoxNumber = (index / 3) + 1;
         }
 
         private static bool IsValidExtendedBoxType(Guid extendedBoxType)

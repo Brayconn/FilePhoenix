@@ -182,6 +182,32 @@ namespace FileSplitter.FileTypes
             }
         }
 
+        class GIFFileFragment : FileFragmentReference
+        {
+            public GIFFileFragment(ulong offset, ulong length, string[] filename, SectionTypes sectionType)
+                : this(offset, length, filename, Validity.Unchecked,"",sectionType) { }
+            public GIFFileFragment(long offset, long length, string[] filename, SectionTypes sectionType)
+                : this(offset, length, filename,Validity.Unchecked,"",sectionType) { }
+
+            public GIFFileFragment(long offset, long length, string[] filename, Validity validity, SectionTypes sectionType)
+                : this((ulong)offset, (ulong)length, filename, validity, "", sectionType) { }
+
+            public GIFFileFragment(long offset, long length, string[] filename, string description, SectionTypes sectionType)
+                : this(offset, length, filename, Validity.Unchecked, description, sectionType) { }
+
+            public GIFFileFragment(long offset, long length, string[] filename, Validity validity, string description, SectionTypes sectionType)
+                : this((ulong)offset, (ulong)length, filename, validity, description, sectionType) { }
+
+            public GIFFileFragment(ulong offset, ulong length, string[] filename, Validity validity, string description, SectionTypes sectionType)
+                : base(offset,length,filename,validity,description)
+            {
+                SectionType = sectionType;
+            }
+
+            public SectionTypes SectionType { get; set; }
+        }
+
+
         /// <summary>
         /// Reads the Top, Left, Width, and Height int16s at the given position
         /// </summary>
@@ -191,9 +217,9 @@ namespace FileSplitter.FileTypes
         /// <param name="MaxWidth">Max width to use during validation</param>
         /// <param name="MaxHeight">Max height to use during validation</param>
         /// <returns></returns>
-        private static FileFragmentReference[] ReadLeftTopWidthHeight(BinaryReader br, string folderName, short MaxWidth, short MaxHeight)
+        private static GIFFileFragment[] ReadLeftTopWidthHeight(BinaryReader br, string folderName, short MaxWidth, short MaxHeight)
         {
-            FileFragmentReference[] output = new FileFragmentReference[4];
+            GIFFileFragment[] output = new GIFFileFragment[4];
 
             //TODO review what the limits of these values actually are...
             short left = br.ReadInt16();
@@ -201,18 +227,14 @@ namespace FileSplitter.FileTypes
             short width = br.ReadInt16();
             short height = br.ReadInt16();
 
-            output[0] = new FileFragmentReference(br.BaseStream.Position - 8, 2,
-                new string[] { folderName, "X Offset" }, (0 <= width && left + width <= MaxWidth) ? Validity.Valid : Validity.HardInvalid)
-                { { "SectionType", SectionTypes.XOffset } };
-            output[1] = new FileFragmentReference(br.BaseStream.Position - 6, 2,
-                new string[] { folderName, "Y Offset" }, (0 <= height && top + height <= MaxHeight) ? Validity.Valid : Validity.HardInvalid)
-                { { "SectionType", SectionTypes.YOffset } };            
-            output[2] = new FileFragmentReference(br.BaseStream.Position - 4, 2,
-                new string[] { folderName, "Width" }, (0 <= width && left + width <= MaxWidth) ? Validity.Valid : Validity.HardInvalid)
-                { { "SectionType", SectionTypes.Width } };            
-            output[3] = new FileFragmentReference(br.BaseStream.Position - 2, 2,
-                new string[] { folderName, "Height" }, (0 <= height && top + height <= MaxHeight) ? Validity.Valid : Validity.HardInvalid)
-                { { "SectionType", SectionTypes.Height } };
+            output[0] = new GIFFileFragment(br.BaseStream.Position - 8, 2,
+                new string[] { folderName, "X Offset" }, (0 <= width && left + width <= MaxWidth) ? Validity.Valid : Validity.HardInvalid, SectionTypes.XOffset);
+            output[1] = new GIFFileFragment(br.BaseStream.Position - 6, 2,
+                new string[] { folderName, "Y Offset" }, (0 <= height && top + height <= MaxHeight) ? Validity.Valid : Validity.HardInvalid, SectionTypes.YOffset);            
+            output[2] = new GIFFileFragment(br.BaseStream.Position - 4, 2,
+                new string[] { folderName, "Width" }, (0 <= width && left + width <= MaxWidth) ? Validity.Valid : Validity.HardInvalid, SectionTypes.Width);            
+            output[3] = new GIFFileFragment(br.BaseStream.Position - 2, 2,
+                new string[] { folderName, "Height" }, (0 <= height && top + height <= MaxHeight) ? Validity.Valid : Validity.HardInvalid, SectionTypes.Height);
 
             return output;
         }
@@ -225,13 +247,13 @@ namespace FileSplitter.FileTypes
         /// <param name="fullPath">Full path to assign the file fragment reference</param>
         /// <param name="validity">Validity to assign the file fragment reference</param>
         /// <returns></returns>
-        private static FileFragmentReference FindNextSection(BinaryReader br, bool backOff, string[] fullPath, Validity validity)
+        private static GIFFileFragment FindNextSection(BinaryReader br, bool backOff, string[] fullPath, Validity validity)
         {
             long StartPosition;
             for (StartPosition = br.BaseStream.Position; !SentinalTypes.Contains(br.PeekByte()); br.BaseStream.Position++) ;
             if (backOff)
                 br.BaseStream.Position--;
-            return new FileFragmentReference(StartPosition,br.BaseStream.Position - StartPosition, fullPath, validity) { { "SectionType", SectionTypes.Unknown } };
+            return new GIFFileFragment(StartPosition,br.BaseStream.Position - StartPosition, fullPath, validity, SectionTypes.Unknown);
         }
 
         /// <summary>
@@ -245,26 +267,23 @@ namespace FileSplitter.FileTypes
         /// <param name="addTrailer">Whether or not to add a ffr for the 0x00 byte</param>
         /// <param name="dataValidity">What validity to assign to the data chunks</param>
         /// <returns></returns>
-        private static List<FileFragmentReference> ReadDataSections(BinaryReader br, string folderName, string filename, bool isDataText, bool addTrailer, Validity dataValidity)
+        private static List<GIFFileFragment> ReadDataSections(BinaryReader br, string folderName, string filename, bool isDataText, bool addTrailer, Validity dataValidity)
         {
-            List<FileFragmentReference> output = new List<FileFragmentReference>();
+            List<GIFFileFragment> output = new List<GIFFileFragment>();
             for(int dataNumber = 0; br.PeekByte() != 0; dataNumber++)
             {
                 byte length = br.ReadByte();
-                output.Add(new FileFragmentReference(br.BaseStream.Position - 1, 1,
-                    new string[] { folderName, $"{filename} {dataNumber} Length" }, Validity.Valid)
-                    { { "SectionType", SectionTypes.Length } } );
-                output.Add(new FileFragmentReference(br.BaseStream.Position, length,
-                    new string[] { folderName, $"{filename} {dataNumber} Data{(isDataText ? ".txt" : ".raw")}" }, dataValidity, isDataText ? br.ReadString(length) : "")
-                    { { "SectionType", SectionTypes.Data } });
+                output.Add(new GIFFileFragment(br.BaseStream.Position - 1, 1,
+                    new string[] { folderName, $"{filename} {dataNumber} Length" }, Validity.Valid, SectionTypes.Length));
+                output.Add(new GIFFileFragment(br.BaseStream.Position, length,
+                    new string[] { folderName, $"{filename} {dataNumber} Data{(isDataText ? ".txt" : ".raw")}" }, dataValidity, isDataText ? br.ReadString(length) : "", SectionTypes.Data));
                 if (!isDataText) //TODO figure out if there's any way to remove this
                     br.BaseStream.Position += length;
             }
             if (addTrailer)
             {
-                output.Add(new FileFragmentReference(br.BaseStream.Position, 1,
-                    new string[] { folderName, $"{filename} Trailer" }, Validity.Valid)
-                    { { "SectionType", SectionTypes.Trailer } });
+                output.Add(new GIFFileFragment(br.BaseStream.Position, 1,
+                    new string[] { folderName, $"{filename} Trailer" }, Validity.Valid, SectionTypes.Trailer ));
                 br.BaseStream.Position++;
             }
             return output;
@@ -280,39 +299,39 @@ namespace FileSplitter.FileTypes
             {
                 //Header
                 string fileHeader = br.ReadString(6);
-                output.Add(new FileFragmentReference(0, 6, new string[] { "Header", "Header" },
-                    headerTypes.Contains(fileHeader) ? Validity.Valid : Validity.HardInvalid, $"File header = {fileHeader}")
-                    { { "SectionType", SectionTypes.Header } });
+                output.Add(new GIFFileFragment(0, 6, new string[] { "Header", "Header" },
+                    headerTypes.Contains(fileHeader) ? Validity.Valid : Validity.HardInvalid,
+                    $"File header = {fileHeader}", SectionTypes.Header));
                 
                 //Logical Screen Descriptor
                 short LSDwidth = br.ReadInt16();
-                output.Add(new FileFragmentReference(6, 2, new string[] { "Header", "Logical Screen Descriptor", "Width" },
-                    (LSDwidth >= 0) ? Validity.Valid : Validity.HardInvalid, $"Width = {LSDwidth}")
-                    { { "SectionType", SectionTypes.Width } });
+                output.Add(new GIFFileFragment(6, 2, new string[] { "Header", "Logical Screen Descriptor", "Width" },
+                    (LSDwidth >= 0) ? Validity.Valid : Validity.HardInvalid,
+                    $"Width = {LSDwidth}", SectionTypes.Width));
                 short LSDheight = br.ReadInt16();
-                output.Add(new FileFragmentReference(8, 2, new string[] { "Header", "Logical Screen Descriptor", "Height" },
-                    (LSDheight >= 0) ? Validity.Valid : Validity.HardInvalid, $"Height = {LSDheight}")
-                    { { "SectionType", SectionTypes.Height } });
+                output.Add(new GIFFileFragment(8, 2, new string[] { "Header", "Logical Screen Descriptor", "Height" },
+                    (LSDheight >= 0) ? Validity.Valid : Validity.HardInvalid,
+                    $"Height = {LSDheight}", SectionTypes.Height));
 
                 PackedGlobalColorTableInfo globalColorTableInfo = new PackedGlobalColorTableInfo(br.ReadByte());
 
                 //TODO validate all of these
-                output.Add(new FileFragmentReference(10, 1, new string[] { "Header", "Packed Byte" }, globalColorTableInfo.ToString())
-                    { { "SectionType", SectionTypes.GlobalColorTablePacked } });
+                output.Add(new GIFFileFragment(10, 1, new string[] { "Header", "Packed Byte" },
+                    globalColorTableInfo.ToString(), SectionTypes.GlobalColorTablePacked));
 
-                output.Add(new FileFragmentReference(11, 1, new string[] { "Header", "Background Color Index" }, Validity.Unknown)
-                    { { "SectionType", SectionTypes.ColorIndex } });
+                output.Add(new GIFFileFragment(11, 1, new string[] { "Header", "Background Color Index" },
+                    Validity.Unknown, SectionTypes.ColorIndex));
 
-                output.Add(new FileFragmentReference(12, 1, new string[] { "Header", "Pixel Aspect Ratio" }, Validity.Unknown)
-                    { { "SectionType", SectionTypes.PixelAspectRatio } });
+                output.Add(new GIFFileFragment(12, 1, new string[] { "Header", "Pixel Aspect Ratio" },
+                    Validity.Unknown, SectionTypes.PixelAspectRatio));
 
                 int GCTLength = 3 * (1 << (globalColorTableInfo.BitsPerEntry + 1));
                 if (globalColorTableInfo.Exists)
                 {
                     //TODO split more?
-                    output.Add(new FileFragmentReference(13, (ulong)GCTLength,
-                        new string[] { "Header", "Global Color Table" })
-                        { { "SectionType", SectionTypes.ColorTable } });
+                    output.Add(new GIFFileFragment(13, (ulong)GCTLength,
+                        new string[] { "Header", "Global Color Table" },
+                        SectionTypes.ColorTable));
                 }
                 br.BaseStream.Seek(13 + GCTLength, SeekOrigin.Begin);
                 
@@ -325,31 +344,31 @@ namespace FileSplitter.FileTypes
                     {
                         #region Image
                         case ((byte)','):
-                            output.Add(new FileFragmentReference(br.BaseStream.Position - 1, 1,
-                                new string[] { $"Image {section}", "Sentinal" }, Validity.Valid)
-                                { { "SectionType", SectionTypes.Sentinal } }); //I would really hope this is valid if we've made it to this case...
+                            output.Add(new GIFFileFragment(br.BaseStream.Position - 1, 1,
+                                new string[] { $"Image {section}", "Sentinal" },
+                                Validity.Valid, SectionTypes.Sentinal)); //I would really hope this is valid if we've made it to this case...
 
                             output.AddRange(ReadLeftTopWidthHeight(br, $"Image {section}", LSDwidth, LSDheight));
 
                             PackedLocalColorTableInfo localColorTableInfo = new PackedLocalColorTableInfo(br.ReadByte());
 
                             //TODO Validate?
-                            output.Add(new FileFragmentReference(br.BaseStream.Position - 1, 1, new string[] { $"Image {section}", "Packed Byte" },localColorTableInfo.ToString())
-                                { { "SectionType", SectionTypes.LocalColorTablePacked } });
+                            output.Add(new GIFFileFragment(br.BaseStream.Position - 1, 1,
+                                new string[] { $"Image {section}", "Packed Byte" },
+                            localColorTableInfo.ToString(), SectionTypes.LocalColorTablePacked));
 
                             if(localColorTableInfo.Exists)
                             {
                                 int LCTLength = 3 * (1 << (localColorTableInfo.BitsPerEntry + 1));
                                 //TODO split more?
-                                output.Add(new FileFragmentReference(br.BaseStream.Position, LCTLength,
-                                    new string[] { $"Image {section}", "Local Color Table" })
-                                    { { "SectionType", SectionTypes.ColorTable } });
+                                output.Add(new GIFFileFragment(br.BaseStream.Position, LCTLength,
+                                    new string[] { $"Image {section}", "Local Color Table" }, SectionTypes.ColorTable));
                                 br.BaseStream.Seek(LCTLength, SeekOrigin.Current);
                             }
 
                             //TODO what even is this????????
-                            output.Add(new FileFragmentReference(br.BaseStream.Position, 1, new string[] { $"Image {section}", "Unencoded Length" },
-                                br.ReadByte().ToString()) { { "SectionType", SectionTypes.Unknown /*TODO uncompressed length?*/ } });
+                            output.Add(new GIFFileFragment(br.BaseStream.Position, 1, new string[] { $"Image {section}", "Unencoded Length" },
+                                br.ReadByte().ToString(), SectionTypes.Unknown /*TODO uncompressed length?*/ ));
 
                             output.AddRange(ReadDataSections(br, $"Image {section}", "Image Data", false, true, Validity.OutOfScope));
                             break;
@@ -357,51 +376,46 @@ namespace FileSplitter.FileTypes
 
                         #region Extension
                         case ((byte)'!'):
-                            output.Add(new FileFragmentReference(br.BaseStream.Position - 1, 1,
-                                new string[] { $"Extension {section}", "Sentinal" }, Validity.Valid)
-                                { { "SectionType", SectionTypes.Sentinal } });
+                            output.Add(new GIFFileFragment(br.BaseStream.Position - 1, 1,
+                                new string[] { $"Extension {section}", "Sentinal" }, Validity.Valid, SectionTypes.Sentinal));
 
                             byte type = br.ReadByte(); //TODO Validate this by making a list of all types
-                            output.Add(new FileFragmentReference(br.BaseStream.Position - 1, 1,
-                                new string[] { $"Extension {section}", "Type" }, Validity.Unchecked)
-                                { { "SectionType", SectionTypes.ExtensionType } });
+                            output.Add(new GIFFileFragment(br.BaseStream.Position - 1, 1,
+                                new string[] { $"Extension {section}", "Type" }, Validity.Unchecked, SectionTypes.ExtensionType));
                             switch (type)
                             {
                                 #region Plain Text
                                 case (0x01):
                                     byte plainTextSize = br.ReadByte(); //Should always be 0x0Ch
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position - 1, 1,
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position - 1, 1,
                                         new string[] { $"Extension {section}", "Plain Text Block Length" },
-                                        plainTextSize == 0x0C ? Validity.Valid : Validity.HardInvalid)
-                                        { { "SectionType", SectionTypes.Length } }); //tbh, this value not being 0x0C would be a hard invalid for filephoenix rn
+                                        plainTextSize == 0x0C ? Validity.Valid : Validity.HardInvalid, SectionTypes.Length)); //tbh, this value not being 0x0C would be a hard invalid for filephoenix rn
 
                                     output.AddRange(ReadLeftTopWidthHeight(br, $"Extension {section}", LSDwidth, LSDheight));
 
                                     //TODO validate one byte
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position, 1,
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position, 1,
                                         new string[] { $"Extension {section}", "Character Cell Width" },Validity.Valid,
-                                        br.ReadByte().ToString())
-                                        { { "SectionType", SectionTypes.Width } });
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position, 1,
+                                        br.ReadByte().ToString(), SectionTypes.Width ));
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position, 1,
                                         new string[] { $"Extension {section}", "Character Cell Height" }, Validity.Valid,
-                                        br.ReadByte().ToString())
-                                        { { "SectionType", SectionTypes.Height } });
+                                        br.ReadByte().ToString(), SectionTypes.Height));
 
                                     //TODO this is flawed since it needs to fall back to the Local Color table if !GCTExists
                                     //Also, if both the GCT and LCT aren't there? Oh boy...
                                     int maxIndex = GCTLength / 3;
                                     
                                     byte TextColorIndex = br.ReadByte();
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position, 1,
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position, 1,
                                         new string[] { $"Extension {section}", "Text Color Index" },
-                                        TextColorIndex < maxIndex ? Validity.Valid : Validity.HardInvalid, TextColorIndex.ToString())
-                                        { { "SectionType", SectionTypes.ColorIndex } });
+                                        TextColorIndex < maxIndex ? Validity.Valid : Validity.HardInvalid,
+                                        TextColorIndex.ToString(), SectionTypes.ColorIndex));
 
                                     byte BackColorIndex = br.ReadByte();
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position, 1,
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position, 1,
                                         new string[] { $"Extension {section}", "Text Background Color Index" },
-                                        BackColorIndex < maxIndex ? Validity.Valid : Validity.HardInvalid, BackColorIndex.ToString())
-                                        { { "SectionType", SectionTypes.ColorIndex } });
+                                        BackColorIndex < maxIndex ? Validity.Valid : Validity.HardInvalid, BackColorIndex.ToString(),
+                                        SectionTypes.ColorIndex));
 
                                     output.AddRange(ReadDataSections(br, $"Extension {section}", "Plain Text", true, false, Validity.Valid));
                                     break;
@@ -410,28 +424,27 @@ namespace FileSplitter.FileTypes
                                 #region Graphics Control
                                 case (0xF9):
                                     byte graphicsControlSize = br.ReadByte(); //Should always be 0x04
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position - 1, 1,
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position - 1, 1,
                                         new string[] { $"Extension {section}", "Graphics Control Block Length" },
-                                        graphicsControlSize == 0x04 ? Validity.Valid : Validity.HardInvalid)
-                                        { { "SectionType", SectionTypes.Length } });
+                                        graphicsControlSize == 0x04 ? Validity.Valid : Validity.HardInvalid, SectionTypes.Length));
 
                                     PackedGraphicsControlInfo graphicsControlInfo = new PackedGraphicsControlInfo(br.ReadByte());
                                     
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position - 1, 1,
-                                        new string[] { $"Extension {section}", "Packed Byte" }, graphicsControlInfo.ToString())
-                                        { { "SectionType", SectionTypes.GraphicsControlPacked } });
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position - 1, 1,
+                                        new string[] { $"Extension {section}", "Packed Byte" }, graphicsControlInfo.ToString(),
+                                        SectionTypes.GraphicsControlPacked));
                                     
                                     //In Centiseconds (hundreths of seconds)
                                     short DelayTime = br.ReadInt16();
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position - 2, 2,
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position - 2, 2,
                                         new string[] { $"Extension {section}", "Delay Time" },
-                                        0 <= DelayTime ? Validity.Valid : Validity.HardInvalid) //TODO check if this is hard or soft
-                                        { { "SectionType", SectionTypes.DelayTime } });
+                                        0 <= DelayTime ? Validity.Valid : Validity.HardInvalid, //TODO check if this is hard or soft
+                                        SectionTypes.DelayTime));
 
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position, 1,
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position, 1,
                                         new string[] { $"Extension {section}", "Transparent Color Index" },
-                                        br.ReadByte() < GCTLength / 3 ? Validity.Valid : Validity.HardInvalid) //TODO < or <=?
-                                        { { "SectionType", SectionTypes.ColorIndex } }); 
+                                        br.ReadByte() < GCTLength / 3 ? Validity.Valid : Validity.HardInvalid, //TODO < or <=?
+                                        SectionTypes.ColorIndex)); 
                                     break;
                                     #endregion
 
@@ -445,20 +458,19 @@ namespace FileSplitter.FileTypes
                                 case (0xFF):
                                     //TODO kind of unrealistic to parse all possible application chunks... right?
                                     byte applicationSize = br.ReadByte(); //Should always be 0x0B
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position - 1, 1,
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position - 1, 1,
                                         new string[] { $"Extension {section}", "Application Extension Length" },
-                                        applicationSize == 0x0B ? Validity.Valid : Validity.HardInvalid)
-                                        { { "SectionType", SectionTypes.Length } });
+                                        applicationSize == 0x0B ? Validity.Valid : Validity.HardInvalid,
+                                        SectionTypes.Length));
                                     
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position, 8,
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position, 8,
                                         new string[] { $"Extension {section}", "Identifier" },
-                                        Validity.Valid, br.ReadString(8))
-                                        { { "SectionType", SectionTypes.ApplicationIdentifier } });
+                                        Validity.Valid, br.ReadString(8), SectionTypes.ApplicationIdentifier));
 
-                                    output.Add(new FileFragmentReference(br.BaseStream.Position, 3,
+                                    output.Add(new GIFFileFragment(br.BaseStream.Position, 3,
                                         new string[] { $"Extension {section}", "Authentication Code" },
-                                        Validity.Valid, string.Join(", ", br.ReadBytes(3))) //This could be human readable, or not, so byte[] jsut to be sure
-                                        { { "SectionType", SectionTypes.ApplicationAuthCode } });
+                                        Validity.Valid, string.Join(", ", br.ReadBytes(3)), //This could be human readable, or not, so byte[] jsut to be sure
+                                        SectionTypes.ApplicationAuthCode));
 
                                     output.AddRange(ReadDataSections(br, $"Extension {section}", "Application", false, false, Validity.Valid));
                                     break;
@@ -471,19 +483,18 @@ namespace FileSplitter.FileTypes
                                     break;
                                     #endregion
                             }
-                            output.Add(new FileFragmentReference(br.BaseStream.Position, 1,
+                            output.Add(new GIFFileFragment(br.BaseStream.Position, 1,
                                             new string[] { $"Extension {section}", "Extension Block Trailer" },
-                                            br.ReadByte() == 0 ? Validity.Valid : Validity.SoftInvalid)
-                                            { { "SectionType", SectionTypes.Trailer } });
+                                            br.ReadByte() == 0 ? Validity.Valid : Validity.SoftInvalid, SectionTypes.Trailer));
                             break;
                         #endregion
 
                         #region End of file
                         case ((byte)';'):
-                            output.Add(new FileFragmentReference(br.BaseStream.Position - 1, 1,
+                            output.Add(new GIFFileFragment(br.BaseStream.Position - 1, 1,
                                 new string[] { $"End Of File Marker {section}" }, 
-                                (br.BaseStream.Position != br.BaseStream.Length || EndOfFileIndex != null) ? Validity.SoftInvalid : Validity.Valid)
-                                { { "SectionType", SectionTypes.EndOfFile } });
+                                (br.BaseStream.Position != br.BaseStream.Length || EndOfFileIndex != null) ? Validity.SoftInvalid : Validity.Valid
+                                , SectionTypes.EndOfFile));
                             EndOfFileIndex = output.Count - 1;
                             break;
                         #endregion
@@ -516,7 +527,7 @@ namespace FileSplitter.FileTypes
             list[index].Validity = (0 <= BinaryFileInterpreter.ReadFileAs<short>(list[index].Path)) ? Validity.Valid : Validity.HardInvalid;
             //Need to re-validate anything that relies on the full image's width/height
             for (int i = 6; i < list.Count; i++) //items 0-5 are guarenteed to not be widths, heigths, xoffsets, or yoffsets
-                if (sections.Any(x => x == list[i].variables.SectionType))
+                if (sections.Any(x => x == (list[i] as GIFFileFragment).SectionType))
                     list[i].Validity = Validity.Unchecked;
         }
 
@@ -550,7 +561,7 @@ namespace FileSplitter.FileTypes
 
             byte CurrentLength;
             ulong ActualLength;
-            switch(list[index].variables.SectionType)
+            switch((list[index] as GIFFileFragment).SectionType)
             {
                 case (SectionTypes.Header):
                     list[index].Validity = headerTypes.Contains(File.ReadAllText(list[index].Path))
@@ -607,7 +618,7 @@ namespace FileSplitter.FileTypes
                     }
                     CurrentLength = filecontents[0];
                     ActualLength = 0;
-                    for(int i = index + 1; !LengthEnders.Contains((SectionTypes)list[i].variables.SectionType); i++)
+                    for(int i = index + 1; !LengthEnders.Contains((list[i] as GIFFileFragment).SectionType); i++)
                         ActualLength += (ulong)new FileInfo(list[i].Path).Length;
 
                     list[index].Validity = CurrentLength == ActualLength ? Validity.Valid : Validity.HardInvalid;
@@ -615,7 +626,7 @@ namespace FileSplitter.FileTypes
                 case (SectionTypes.Data):
                     ActualLength = 0;
                     int lengthIndex;
-                    for (lengthIndex = index; list[lengthIndex].variables.SectionType != SectionTypes.Length; lengthIndex--)
+                    for (lengthIndex = index; (list[lengthIndex] as GIFFileFragment).SectionType != SectionTypes.Length; lengthIndex--)
                         ActualLength += (ulong)new FileInfo(list[lengthIndex].Path).Length;
                     CurrentLength = BinaryFileInterpreter.ReadFileAs<byte>(list[lengthIndex].Path);
                     if (FixLength && (CurrentLength != ActualLength) && ActualLength <= byte.MaxValue)
@@ -663,7 +674,7 @@ namespace FileSplitter.FileTypes
                         //and find the next available EOF marker
                         for (int i = index + 1; i < list.Count; i++)
                         {
-                            if(list[i].variables.SectionType == SectionTypes.EndOfFile)
+                            if((list[i] as GIFFileFragment).SectionType == SectionTypes.EndOfFile)
                             {
                                 //Stop once we find it
                                 EndOfFileIndex = i;
@@ -692,7 +703,7 @@ namespace FileSplitter.FileTypes
         /// <returns></returns>
         private int FindSectionOfType(IList<FileFragment> list, int index, params SectionTypes[] stoppingPoints)
         {
-            while (!stoppingPoints.Contains((SectionTypes)list[--index].variables.SectionType));
+            while (!stoppingPoints.Contains((list[--index] as GIFFileFragment).SectionType));
             return index;
         }
 
@@ -719,7 +730,7 @@ namespace FileSplitter.FileTypes
             //Starting saftey thingy
             if (index == 0)
             {
-                list[index].variables.SectionType = SectionTypes.Header;
+                (list[index] as GIFFileFragment).SectionType = SectionTypes.Header;
                 return false;
             }
 
@@ -743,7 +754,7 @@ namespace FileSplitter.FileTypes
             else
             {
                 index = FindSectionOfType(list, index, SectionTypes.Sentinal, SectionTypes.Trailer);
-                switch (list[index].variables.SectionType)
+                switch ((list[index] as GIFFileFragment).SectionType)
                 {
                     case (SectionTypes.Trailer):
                         index++;
@@ -843,9 +854,9 @@ namespace FileSplitter.FileTypes
             bool didWork = false;
             for (int i = 0; i < SectionTypeQueue.Count; i++) //TODO is this confusing having i++ all the way up here?
             {
-                if (list[index].variables.SectionType != SectionTypeQueue[i])
+                if ((list[index] as GIFFileFragment).SectionType != SectionTypeQueue[i])
                 {
-                    list[index].variables.SectionType = SectionTypeQueue[i];
+                    (list[index] as GIFFileFragment).SectionType = SectionTypeQueue[i];
                     changed.Add(index);
                     didWork = true;
                 }
