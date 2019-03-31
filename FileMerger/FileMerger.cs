@@ -210,6 +210,7 @@ namespace FileMerger
 
         #region Disposing
 
+        [Browsable(false)]
         public bool IsDisposed { get; private set; }
         ~FileMerger()
         {
