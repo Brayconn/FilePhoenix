@@ -44,6 +44,12 @@ namespace FileSplitter.FileTypes
             Cursor
         }
 
+        //Unused
+        public string PreParse(string input)
+        {
+            return input;
+        }
+
         ushort loadedImageCount;
 
         public void ParseTo(string filename, ref List<FileFragmentReference> output)

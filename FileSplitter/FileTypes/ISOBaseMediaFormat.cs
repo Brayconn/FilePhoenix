@@ -60,6 +60,12 @@ namespace FilePhoenix.FileTypes
             public BoxTypes BoxType { get; set; }
         }
 
+        //Unused
+        public string PreParse(string input)
+        {
+            return input;
+        }
+
         //TODO expand to be closer to NetworkGraphics levels of completeness (dynamic parsing)
         public void ParseTo(string inputFilePath, ref List<FileFragmentReference> output)
         {

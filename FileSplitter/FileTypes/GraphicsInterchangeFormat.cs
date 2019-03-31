@@ -289,6 +289,12 @@ namespace FileSplitter.FileTypes
             return output;
         }
         
+        //Unused
+        public string PreParse(string input)
+        {
+            return input;
+        }
+
         //TODO Anything after the end of the file is going to be ignored by a viewer, thus, their validity should be overridden with SoftInvalid(?)
         int? EndOfFileIndex;
 

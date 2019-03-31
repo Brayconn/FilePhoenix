@@ -283,6 +283,12 @@ namespace FilePhoenix.FileTypes
         [Description("Whether to follow chunk data lengths at their word, or to search for chunk's dynamically"), DefaultValue(ScanModes.Static)]
         public ScanModes ScanMode { get; set; } = ScanModes.Static;
 
+        //Unused
+        public string PreParse(string input)
+        {
+            return input;
+        }
+
         public void ParseTo(string inputFilePath, ref List<FileFragmentReference> output)
         {
             using (BinaryReader br = new BinaryReader(new FileStream(inputFilePath, FileMode.Open, FileAccess.Read)))
