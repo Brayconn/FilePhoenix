@@ -713,9 +713,11 @@ namespace FileSplitter
                     else
                         ClearDirectory(WorkingDirectory);
                 }
-                //Copying the input file to a temp file, just in case the later ParseTo() call needs to edit the file
-                string tempFile = Path.GetTempFileName();
-                File.Copy(inputFile, tempFile, true);
+
+                //Lock the original input file, then let the module pre-parse, and return the path to the edited file it wants to actually open
+                string tempFile;                
+                using (FileStream fs = new FileStream(inputFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    tempFile = FileTypeModule.PreParse(inputFile);                
 
                 //Clear the preivously loaded file and init the new file list
                 VirtualFile = new SortedList<string, FileFragment>();
@@ -729,12 +731,14 @@ namespace FileSplitter
                 progressReporter?.Report(new FileSplitterProgressInfo("Initializing from file...", "Numbering...", 100));
                 List<string> filenames = FilenameManager.Number(WorkingDirectory, files, FileFragmentExtension, ForceExtension);
                 if (files.Count != filenames.Count)
-                    throw new Exception($"File count changed during the numbering process! ({files.Count} -> {filenames.Count})\n Check that your module is putting its file fragments into the right folders.");
+                    throw new Exception($"File count changed during the numbering process! ({files.Count} -> {filenames.Count})\n" +
+                        "Check that your module is putting its file fragments into the right folders.");
 
                 //Prevent any of the usual updates from happening while the working directory is still being filled
                 if (WorkingDirectoryWatcher != null) //Not safe to simply set, since this starts out null before anything's been loaded
                     WorkingDirectoryWatcher.EnableRaisingEvents = false;
 
+                //Locking/opening the newley made tempFile
                 using (BinaryReader br = new BinaryReader(new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     for (int i = 0; i < files.Count; i++)
@@ -742,6 +746,7 @@ namespace FileSplitter
                         progressReporter?.Report(new FileSplitterProgressInfo("Saving files to working directory...", filenames[i], (i + 1) * 100 / files.Count));
 
                         //Automatically creates any subdirectories needed (including the working directory, if it doesn't already exist)
+                        //Also updates the (previously empty) Path property
                         Directory.CreateDirectory(Path.GetDirectoryName(files[i].Path = filenames[i]));
 
                         //HACK trying to account for ulongs is annoying
@@ -753,12 +758,13 @@ namespace FileSplitter
                             for(ulong readBytes = 0; readBytes < files[i].length; readBytes++)
                                 bw.Write(br.ReadByte());
 
-                        //Add the file
+                        //Add the file fragment
                         VirtualFile.Add(filenames[i], files[i]);
                     }
                 }
-                //Don't need to keep the temp file anymore
-                File.Delete(tempFile);
+                //If an actual temp file was provided, delete it now
+                if(tempFile != inputFile)
+                    File.Delete(tempFile);
                 //Final updates
                 UpdateWorkingDirectoryWatcher(); //WorkingDirectoryWatcher.EnableRaisingEvents = true;
                 VirtualFileUpdated();

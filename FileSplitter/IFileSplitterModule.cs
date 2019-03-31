@@ -27,7 +27,14 @@ namespace FileSplitter
         bool UsesVariables { get; }
 
         /// <summary>
-        /// Parses the given file to the given output. Modules may also use this function to do holistic operations (such as decryption) on the given file
+        /// Preforms any holistic operation on the file that needs to be done before parsing (such as decryption)
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
+        string PreParse(string filename);
+
+        /// <summary>
+        /// Parses the given file to the given output.
         /// </summary>
         /// <param name="filename">The file to parse</param>
         /// <param name="output">The list to parse to</param>
