@@ -491,21 +491,23 @@ namespace FileSplitter
                 i += 100;
             }
             
-            //Using a seperate list of only the indexes of changes
+            //Get a list of all indexes that have been changed in some way
             List<int> fileFragmentsToUpdate = VirtualFile.Values
-                //!contains covers added FileFragments, != covers any shifting around that happens
+                //!Contains() covers newley added FileFragments, != covers moved FileFragments
                 .Where(x => !originalOrder.Contains(x) || VirtualFile.IndexOfValue(x) != originalOrder.IndexOf(x))
-                //TODO might be slow?
+                //TODO concat is slow
                 .Concat(changedFileFragments)
+                //Getting indexes
                 .Select(x => VirtualFile.IndexOfValue(x))
-                .Distinct()
-                .ToList();
-                        
+                //Remove duplicates
+                .Distinct().ToList();
+            
+            //Update the variables of these FileFragments, and update the list  incase anything new crops up
             fileFragmentsToUpdate = UpdateVariables(fileFragmentsToUpdate);
             if (ValidationMode == ValidationModes.AfterChanges)
-                ReValidate(fileFragmentsToUpdate);
+                UpdateValidation(fileFragmentsToUpdate);
             else
-                Invalidate(fileFragmentsToUpdate);
+                ClearValidation(fileFragmentsToUpdate);
 
             ChangeQueue.Clear();
             VirtualFileUpdated();
@@ -575,33 +577,38 @@ namespace FileSplitter
 
         #region Validation
 
-
-        private void Invalidate()
+        /// <summary>
+        /// Clears the validity of every file fragment
+        /// </summary>
+        private void ClearValidation()
         {
-            Invalidate(Enumerable.Range(0, VirtualFile.Count - 1).ToList());
+            ClearValidation(Enumerable.Range(0, VirtualFile.Count - 1).ToList());
         }
         /// <summary>
-        /// Invalidates the FileFragments at the given indecies
+        /// Clears the validity of the FileFragments at the given indecies
         /// </summary>
         /// <param name="ffs">The indexes in the VirtualFile to invalidate</param>
-        private void Invalidate(IList<int> ffs)
+        private void ClearValidation(IList<int> ffs)
         {
             for (int i = 0; i < ffs.Count; i++)
             {
-                progressReporter?.Report(new FileSplitterProgressInfo("Invalidating...", VirtualFile.Values[i].Path, (i + 1) * 100 / ffs.Count));
+                progressReporter?.Report(new FileSplitterProgressInfo("Clearing Validation...", VirtualFile.Values[i].Path, (i + 1) * 100 / ffs.Count));
                 VirtualFile.Values[ffs[i]].Validity = Validity.Unchecked;
             }
         }
 
-        private void ReValidate()
+        /// <summary>
+        /// Updates the validity of every file fragment
+        /// </summary>
+        private void UpdateValidation()
         {
-            ReValidate(Enumerable.Range(0, VirtualFile.Count - 1).ToList());
+            UpdateValidation(Enumerable.Range(0, VirtualFile.Count - 1).ToList());
         }
         /// <summary>
-        /// Updates the validity of any FileFragments in the VirtualFile of the given type(s)
+        /// Updates the validity of the file fragments at the given indexes
         /// </summary>
-        /// <param name="ffs">FileFragments to validate</param>
-        private void ReValidate(IList<int> ffs)
+        /// <param name="ffs">FileFragment indexes to validate</param>
+        private void UpdateValidation(IList<int> ffs)
         {
             for (int i = 0; i < ffs.Count; i++)
             {
@@ -613,7 +620,7 @@ namespace FileSplitter
                 try
                 {
 #endif
-                    progressReporter?.Report(new FileSplitterProgressInfo("Re-Validating...", $"{VirtualFile.Values[i].Path} In Progress...", (i + 1) * 100 / ffs.Count));
+                    progressReporter?.Report(new FileSplitterProgressInfo("Updating Validation...", $"{VirtualFile.Values[i].Path} In Progress...", (i + 1) * 100 / ffs.Count));
                     FileTypeModule.UpdateValidity(VirtualFile.Values, ffs[i]);
                     succeeded = true;
 #if !CRASH_ON_VALIDITY_FAILURE
@@ -623,19 +630,28 @@ namespace FileSplitter
                     MessageBox.Show(e.Message);
                 }
 #endif
-                progressReporter?.Report(new FileSplitterProgressInfo("Re-Validating...", $"{VirtualFile.Values[i].Path} {(succeeded ? "Succeeded!" : "Failed")}", (i + 1) * 100 / ffs.Count));
+                progressReporter?.Report(new FileSplitterProgressInfo("Updating Validation...", $"{VirtualFile.Values[i].Path} {(succeeded ? "Succeeded!" : "Failed")}", (i + 1) * 100 / ffs.Count));
                 if(WorkingDirectoryWatcher != null)
                     WorkingDirectoryWatcher.EnableRaisingEvents = true;
             }
         }
 
+        /// <summary>
+        /// Updates the variables of every FileFragment
+        /// </summary>
         private void UpdateVariables()
         {
             if(FileTypeModule.UsesVariables)
                 UpdateVariables(Enumerable.Range(0, VirtualFile.Count - 1).ToList());
         }
+        /// <summary>
+        /// Updates the variables of the FileFragments at the given indexes
+        /// </summary>
+        /// <param name="indexesToEdit">The indexes to update</param>
+        /// <returns>The indexes that actually got updated (this can be MORE than what was originally given)</returns>
         private List<int> UpdateVariables(IList<int> indexesToEdit)
         {
+            //If the module doesn't use variables, don't even bother looping, just quit immediatly
             if (!FileTypeModule.UsesVariables)
                 return indexesToEdit.ToList();
 
@@ -794,7 +810,7 @@ namespace FileSplitter
                 }
                 //Updates their variables, then validates
                 UpdateVariables();
-                ReValidate();
+                UpdateValidation();
                 UpdateWorkingDirectoryWatcher();
                 VirtualFileUpdated();
             }
@@ -833,9 +849,9 @@ namespace FileSplitter
 
                 differences = UpdateVariables(differences);
                 if (ValidationMode != ValidationModes.Never)
-                    ReValidate(differences);
+                    UpdateValidation(differences);
                 else
-                    Invalidate(differences);
+                    ClearValidation(differences);
 
                 //Safe to set this because Refresh() is only called once a WorkingDirectoryWatcher has been set
                 WorkingDirectoryWatcher.EnableRaisingEvents = true;
@@ -884,7 +900,7 @@ namespace FileSplitter
         private void _Save(string filename)
         {
             if (ValidationMode == ValidationModes.OnSave)
-                ReValidate();
+                UpdateValidation();
             string tempFile = Path.GetTempFileName();
             using (BinaryWriter bw = new BinaryWriter(new FileStream(tempFile, FileMode.Create, FileAccess.Write)))
             {
