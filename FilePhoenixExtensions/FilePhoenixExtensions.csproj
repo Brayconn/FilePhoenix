@@ -13,6 +13,8 @@
     <Description>Set of extension methods/properties that make File IO easier.</Description>
     <PackageLicenseUrl></PackageLicenseUrl>
     <Copyright>Copyright 2019</Copyright>
+    <RootNamespace>FilePhoenix.Extensions</RootNamespace>
+    <AssemblyName>Brayconn.FilePhoenix.Extensions</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 //TODO invesitgate using this for faster BigEndian conversions?
 //using static System.Net.IPAddress;
 
-namespace FilePhoenixExtensions
+namespace FilePhoenix.Extensions
 {
     /// <summary>
     /// Equality comparer for making byte[] comparisons actually work

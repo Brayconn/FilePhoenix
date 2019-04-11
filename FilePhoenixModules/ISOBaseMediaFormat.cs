@@ -5,11 +5,11 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using FileSplitter;
-using FilePhoenixExtensions;
+using FilePhoenix.Extensions;
 
-namespace FilePhoenix.FileTypes
+namespace FilePhoenix.Modules
 {
-    class ISOBaseMediaFormat : IFileSplitterModule
+    public class ISOBaseMediaFormat : IFileSplitterModule
     {
         [Browsable(false)]
         public string DisplayName => "ISO Base Media Format/Quicktime";

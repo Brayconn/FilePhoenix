@@ -5,11 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using FileSplitter;
-using FilePhoenixExtensions;
+using FilePhoenix.Extensions;
 
-namespace FilePhoenix.FileTypes
+namespace FilePhoenix.Modules
 {
-    class NetworkGraphics : IFileSplitterModule
+    public class NetworkGraphics : IFileSplitterModule
     {
         [Browsable(false)]
         public string DisplayName => "Network Graphics";

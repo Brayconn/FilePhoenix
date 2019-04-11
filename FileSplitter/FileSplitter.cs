@@ -11,7 +11,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static FilePhoenixExtensions.HelperMethods;
+using static FilePhoenix.Extensions.HelperMethods;
 
 namespace FileSplitter
 {
@@ -956,18 +956,20 @@ namespace FileSplitter
 
         private static bool TypeIsModule(Type m) => m.IsClass && !m.IsAbstract && typeof(IFileSplitterModule).IsAssignableFrom(m);
 
-        /// <summary>
-        /// Initilizes a FileSplitter using only modules from the exe
-        /// </summary>
-        public FileSplitter(Progress<FileSplitterProgressInfo> progress = null) : this(true, null, null, progress) { }
+        //Single arg
+        public FileSplitter(bool autoLoad, Progress<FileSplitterProgressInfo> progress = null) : this(autoLoad, null, null, progress) { }
+        public FileSplitter(Type[] modules, Progress<FileSplitterProgressInfo> progress = null) : this(false, modules, null, progress) { }
+        public FileSplitter(string[] pluginFolders, Progress<FileSplitterProgressInfo> progress = null) : this(false, null, pluginFolders, progress) { }
+        //Dual arg
         public FileSplitter(bool autoLoad, Type[] modules, Progress<FileSplitterProgressInfo> progress = null) : this(autoLoad, modules, null, progress) { }
         public FileSplitter(bool autoLoad, string[] pluginFolders, Progress<FileSplitterProgressInfo> progress = null) : this(autoLoad, null, pluginFolders, progress) { }
+        public FileSplitter(Type[] modules, string[] pluginFolders, Progress<FileSplitterProgressInfo> progress = null) : this(false, modules, pluginFolders, progress) { }
         /// <summary>
         /// Mega constructor, shared by everything
         /// </summary>
-        /// <param name="autoLoad">Whether or not to load modules from the exe</param>
-        /// <param name="modules">What modules to load directly</param>
-        /// <param name="pluginFolders">What folders to search for/load external modules from</param>
+        /// <param name="autoLoad">Whether or not to load modules from the EntryAssembly (and all referenced assemblies)</param>
+        /// <param name="modules">Modules to load directly</param>
+        /// <param name="pluginFolders">Folders to search for/load external modules from</param>
         /// <param name="progress">A Progress class to report to</param>
         public FileSplitter(bool autoLoad, Type[] modules, string[] pluginFolders, Progress<FileSplitterProgressInfo> progress = null)
         {
@@ -977,8 +979,14 @@ namespace FileSplitter
             //Exe loading
             if (autoLoad)
             {
-                loadedTypes.AddRange(AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(x => x.GetTypes())
+                var entry = Assembly.GetEntryAssembly();
+                loadedTypes.AddRange(
+                    //Get assemblies from the main assembly, plus all referenced ones
+                    new List<Assembly>() { entry }.Concat(entry.GetReferencedAssemblies()
+                    .Select(x => Assembly.Load(x)))
+                    //Get types from all of those
+                    .SelectMany(x => x.GetExportedTypes())
+                    //Filter to only modules
                     .Where(x => TypeIsModule(x)));
             }
             //Raw module lodaing
@@ -1007,7 +1015,7 @@ namespace FileSplitter
                 }
             }
             if (loadedTypes.Count <= 0) //Just in case...
-                throw new Exception($"FilePhoenix is almost completly useless without loading at least one module, and you just tried to load {loadedTypes.Count}.");
+                throw new ArgumentException("Must supply at least one module to FileSplitter");
 
             //Sorts modules alphabetically
             loadedTypes.Sort((x, y) => ((IFileSplitterModule)Activator.CreateInstance(x)).DisplayName.CompareTo(((IFileSplitterModule)Activator.CreateInstance(y)).DisplayName));

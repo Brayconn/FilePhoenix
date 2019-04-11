@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("FilePhoenix")]
-[assembly: AssemblyDescription("GUI Implementation of FileSplitter")]
+[assembly: AssemblyTitle("FilePhoenixModules")]
+[assembly: AssemblyDescription("File type modules designed for use with FilePhoenix")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Brayconn")]
-[assembly: AssemblyProduct("FilePhoenix")]
-[assembly: AssemblyCopyright("Copyright ©  2018")]
+[assembly: AssemblyProduct("FilePhoenixModules")]
+[assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("e577cb57-06e3-4335-b0e1-e5460c5cfe55")]
+[assembly: Guid("25f8537d-9e37-422e-9993-6ef936853023")]
 
 // Version information for an assembly consists of the following four values:
 //

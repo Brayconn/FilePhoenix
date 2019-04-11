@@ -4,11 +4,11 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using FileSplitter;
-using FilePhoenixExtensions;
+using FilePhoenix.Extensions;
 
-namespace FileSplitter.FileTypes
+namespace FilePhoenix.Modules
 {
-    class GraphicsInterchangeFormat : IFileSplitterModule
+    public class GraphicsInterchangeFormat : IFileSplitterModule
     {        
         [Browsable(false)]
         public string DisplayName => "Graphics Interchange Format";

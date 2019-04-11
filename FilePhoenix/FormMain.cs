@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -9,7 +10,8 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using FileSplitter;
 using FileMerger;
-using System.ComponentModel;
+using FilePhoenix.Modules;
+using FilePhoenix.Extensions;
 
 namespace FilePhoenix
 {
@@ -40,7 +42,11 @@ namespace FilePhoenix
             progress.ProgressChanged += UpdateProgress;
 
             //FileSplitter setup
-            fs = new FileSplitter.FileSplitter(progress);
+            fs = new FileSplitter.FileSplitter(
+                //Network graphics chosen arbitrarily
+                typeof(NetworkGraphics).Assembly.GetExportedTypes(),
+                new[] { AppDomain.CurrentDomain.BaseDirectory },
+                progress);
             fileSplitterPropertyGrid.SelectedObject = fs;
             fs.VirtualFileUpdated += UpdateList;
             /*RIP Databinding
@@ -199,7 +205,7 @@ namespace FilePhoenix
         private void directoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string selectedFolder = null;
-            if (FilePhoenixExtensions.HelperMethods.CanUseBetterFolderBrowser)
+            if (HelperMethods.CanUseBetterFolderBrowser)
             {
                 using (CommonOpenFileDialog folderPicker = new CommonOpenFileDialog()
                 {

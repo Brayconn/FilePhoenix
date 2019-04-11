@@ -9,7 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
-using static FilePhoenixExtensions.HelperMethods;
+using static FilePhoenix.Extensions.HelperMethods;
 
 namespace FileSplitter
 {

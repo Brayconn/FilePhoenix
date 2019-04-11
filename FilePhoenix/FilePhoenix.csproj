@@ -7,7 +7,7 @@
     <ProjectGuid>{E577CB57-06E3-4335-B0E1-E5460C5CFE55}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>FilePhoenix</RootNamespace>
-    <AssemblyName>FilePhoenix</AssemblyName>
+    <AssemblyName>Brayconn.FilePhoenix</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -108,6 +108,10 @@
     <ProjectReference Include="..\FilePhoenixExtensions\FilePhoenixExtensions.csproj">
       <Project>{44d57263-b57a-4e6b-ac13-b0a9ec129d5e}</Project>
       <Name>FilePhoenixExtensions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FilePhoenixModules\FilePhoenixModules.csproj">
+      <Project>{25f8537d-9e37-422e-9993-6ef936853023}</Project>
+      <Name>FilePhoenixModules</Name>
     </ProjectReference>
     <ProjectReference Include="..\FileSplitter\FileSplitter.csproj">
       <Project>{8bd21383-f6ae-4de9-8b0f-1733ecc640df}</Project>

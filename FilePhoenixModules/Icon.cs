@@ -5,11 +5,11 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using FileSplitter;
-using FilePhoenixExtensions;
+using FilePhoenix.Extensions;
 
-namespace FileSplitter.FileTypes
+namespace FilePhoenix.Modules
 {
-    class Icon : IFileSplitterModule
+    public class Icon : IFileSplitterModule
     {
         [Browsable(false)]
         public string DisplayName => "Microsoft Icon/Cursor Files";
