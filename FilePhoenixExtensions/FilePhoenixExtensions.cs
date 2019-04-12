@@ -77,7 +77,7 @@ namespace FilePhoenix.Extensions
         /// <summary>
         /// Passthrough to the internal System.IO.Patternmatcher.StrictMatchPattern method
         /// </summary>
-        public readonly static StrictMatchPatternDelegate StrictMatchPattern;
+        public static StrictMatchPatternDelegate StrictMatchPattern { get; }
 
         /// <summary>
         /// Reverses the given array if bigEndian is true
