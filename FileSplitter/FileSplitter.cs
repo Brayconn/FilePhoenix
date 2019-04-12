@@ -1,6 +1,4 @@
-﻿#define CRASH_ON_VALIDITY_FAILURE
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -616,14 +614,14 @@ namespace FileSplitter
                     WorkingDirectoryWatcher.EnableRaisingEvents = false;
                 bool succeeded = false;
                 //HACK? The idea is that if something goes wrong here the program needn't nessecarily crash...
-#if !CRASH_ON_VALIDITY_FAILURE
+#if !DEBUG
                 try
                 {
 #endif
                     progressReporter?.Report(new FileSplitterProgressInfo("Updating Validation...", $"{VirtualFile.Values[i].Path} In Progress...", (i + 1) * 100 / ffs.Count));
                     FileTypeModule.UpdateValidity(VirtualFile.Values, ffs[i]);
                     succeeded = true;
-#if !CRASH_ON_VALIDITY_FAILURE
+#if !DEBUG
                 }
                 catch (Exception e)
                 {
