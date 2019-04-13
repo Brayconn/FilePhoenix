@@ -977,10 +977,10 @@ namespace FileSplitter
             //Exe loading
             if (autoLoad)
             {
-                var calling = Assembly.GetCallingAssembly();
+                var entry = Assembly.GetEntryAssembly();
                 loadedTypes.AddRange(
                     //Get assemblies from the main assembly, plus all referenced ones
-                    new List<Assembly>() { calling }.Concat(calling.GetReferencedAssemblies()
+                    new List<Assembly>() { entry }.Concat(entry.GetReferencedAssemblies()
                     .Select(x => Assembly.Load(x)))
                     //Get types from all of those
                     .SelectMany(x => x.GetExportedTypes())
