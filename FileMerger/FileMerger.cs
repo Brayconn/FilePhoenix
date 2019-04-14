@@ -190,7 +190,7 @@ namespace FileMerger
                         for (ulong j = 0; j < SubFiles[i].SizeAbsolute; j++)
                         {
                             //Try to read from master file first
-                            if (j < (ulong)br.BaseStream.Length)
+                            if (br.BaseStream.Position < br.BaseStream.Length)
                                 bw.Write(br.ReadByte());
                             //If that fails and we're supposed to fill with some value, fill!
                             else if (SubFiles[i].SizeErrorHandling == SizeErrorModes.FillWithValue)
