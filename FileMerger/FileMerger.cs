@@ -194,7 +194,7 @@ namespace FileMerger
                                 bw.Write(br.ReadByte());
                             //If that fails and we're supposed to fill with some value, fill!
                             else if (SubFiles[i].SizeErrorHandling == SizeErrorModes.FillWithValue)
-                                //HACK this is sort of a mess... also untested
+                                //HACK this is sort of a mess...
                                 bw.Write(SubFiles[i].fillBytes[fillIncrement < SubFiles[i].fillBytes.Length
                                     ? fillIncrement++ 
                                     : fillIncrement = 0]);
