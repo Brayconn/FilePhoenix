@@ -31,7 +31,7 @@ namespace FileSplitter
                         ?? new ReadOnlyCollection<string>(new string[0])).Concat(new string[] { "All Files (*.*)|*.*" })),
                 })
                 {
-                    ofd.FileName = value as string ?? ofd.FileName;
+                    ofd.FileName = Path.GetFileName(value as string ?? ofd.FileName);
 
                     if (ofd.ShowDialog() == DialogResult.OK
                         && (parent.FileLoaded //TODO this is a mess of conditionals
@@ -129,7 +129,7 @@ namespace FileSplitter
                         ?? new ReadOnlyCollection<string>(new string[0])).Concat(new string[] { "All Files (*.*)|*.*" })),
                 })
                 {
-                    sfd.FileName = value as string ?? sfd.FileName;
+                    sfd.FileName = Path.GetFileName(value as string ?? sfd.FileName);
 
                     if (sfd.ShowDialog() == DialogResult.OK)
                         value = sfd.FileName;
