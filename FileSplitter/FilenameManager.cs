@@ -2,24 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using static FileSplitter.FileSplitter;
 
 namespace FileSplitter
 {
-    /* Maybe useful, but has been obseleted anyways
-        /// <summary>
-        /// Returns the top most file or directory of a path
-        /// </summary>
-        /// <param name="filename">The path to parse</param>
-        /// <returns>The top most file or folder</returns>
-        static string GetTopDirectory(string filename)
-        {
-            while (!string.IsNullOrWhiteSpace(Path.GetDirectoryName(filename)))
-                filename = Path.GetDirectoryName(filename);
-            return filename;
-        }
-        */
-
     /// <summary>
     /// Represents a file or folder in the parent VirtualDirectory
     /// </summary>

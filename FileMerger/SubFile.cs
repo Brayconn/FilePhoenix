@@ -82,51 +82,7 @@ namespace FileMerger
 
         #region Offset
 
-        /*This was a bad idea, don't try to use strings as input and parse them differently based on a bool, it's gross
-        class OffsetConverter : TypeConverter
-        {
-            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-            {
-                return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
-            }
-
-            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-            {
-                if(value is string input && context.Instance is SubFile parent)
-                {
-                    switch(parent.OffsetPercent)
-                    {
-                        case true:
-                            if (decimal.TryParse(input, out decimal percent))
-                                return Math.Min(Math.Max(0, percent), 100);
-                            break;
-                        case false:
-                            if (ulong.TryParse(input, out ulong absolute))
-                                return absolute;
-                            break;
-                    }
-                    return value;
-                }
-                else
-                    return base.ConvertFrom(context, culture, value);
-            }
-
-            public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-            {
-                return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
-            }
-
-            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
-            {
-                if(context.Instance is SubFile parent)
-                {
-                    return parent.OffsetPercent ? (decimal)value: (ulong)value;
-                }
-                else
-                    return base.ConvertTo(context, culture, value, destinationType);
-            }
-        }
-        */
+        //Pro tip: don't try to use strings as input and parse them differently based on a bool, it's gross.
         [Category("Offset"), Description("Which value to use when calculating the offset for this file's data."), DefaultValue(TypeSelections.Absolute)]
         public TypeSelections OffsetSelection { get; set; } = TypeSelections.Absolute;
         [Category("Offset"), Description("The offset of this file's data, as a percent of the total file length.")]

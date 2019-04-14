@@ -59,7 +59,7 @@ namespace FilePhoenix.Extensions
         /// <summary>
         /// Whether or not the user's system supports the better folder browser found in Microsoft.WindowsAPICodePack.Dialogs
         /// </summary>
-        public static bool CanUseBetterFolderBrowser
+        public static bool CanUseWinAPICodePackFolderBrowser
         {
             get
             {

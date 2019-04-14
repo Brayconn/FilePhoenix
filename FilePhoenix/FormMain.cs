@@ -86,27 +86,6 @@ namespace FilePhoenix
                 return fs.FileTypeModule?.DisplayName ?? fs.IndexToModule[index - 1];
             else
                 return null;
-
-            /*Before I knew about ?. and ?[]
-            switch (fs.FileTypeModule == null)
-            {
-                case (true):
-                    if (index < fs.AllOpenFileDialogFilters.Count)
-                        return fs.IndexToModule[index - 1];
-                    break;
-                case (false):
-                    if (index < fs.FileTypeModule.OpenFileDialogFilters.Count)
-                        return fs.FileTypeModule.DisplayName;
-                    break;
-            }
-            return null;
-            */
-            /*Golfed code I guess
-            if (index < ((fs.FileTypeModule != null) ? fs.FileTypeModule.OpenFileDialogFilters.Count : fs.AllOpenFileDialogFilters.Count))
-                return ((fs.FileTypeModule != null) ? fs.FileTypeModule.DisplayName : fs.IndexToModule[index - 1]);
-            else
-                return null;
-            */
         }
 
         private static Regex iterationRegex = new Regex(@"\((\d+)\)$");
@@ -205,7 +184,7 @@ namespace FilePhoenix
         private void directoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string selectedFolder = null;
-            if (HelperMethods.CanUseBetterFolderBrowser)
+            if (HelperMethods.CanUseWinAPICodePackFolderBrowser)
             {
                 using (CommonOpenFileDialog folderPicker = new CommonOpenFileDialog()
                 {

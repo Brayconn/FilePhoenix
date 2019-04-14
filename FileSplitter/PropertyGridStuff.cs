@@ -87,7 +87,7 @@ namespace FileSplitter
             public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)
             {
                 //TODO check ?.
-                if (context?.Instance == null || provider == null || !CanUseBetterFolderBrowser)
+                if (context?.Instance == null || provider == null || !CanUseWinAPICodePackFolderBrowser)
                     return base.EditValue(context, provider, value);
 
                 using (CommonOpenFileDialog folderPicker = new CommonOpenFileDialog()

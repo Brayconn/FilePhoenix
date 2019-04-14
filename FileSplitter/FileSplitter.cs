@@ -142,7 +142,7 @@ namespace FileSplitter
         #region Enabling
 
         private int oldModuleHash;
-        private string oldWorkingDirectory; //TODO unused...
+        //private string oldWorkingDirectory; //TODO possibly useless?
         private string oldOpenedFile;
 
         private bool _Enabled = false;
@@ -170,7 +170,7 @@ namespace FileSplitter
 
                             //Storing the last used important stuff
                             oldModuleHash = FileTypeModule.GetHashCode(); //Logging a hash 'cause storing the entire module is lame
-                            oldWorkingDirectory = WorkingDirectoryWatcher.Path; //strings are ok
+                            //oldWorkingDirectory = WorkingDirectoryWatcher.Path; //strings are ok
                             oldOpenedFile = OpenedFile;
                             break;
                         case (true):
@@ -179,15 +179,6 @@ namespace FileSplitter
                             {
                                 AutoInit();
                             }
-                            /*See MoveWorkingDirectory for more
-                            //If only the working directory was changed, we can just move our progress over to there
-                            else if (oldWorkingDirectory != WorkingDirectory)
-                            {
-                                
-                                MoveWorkingDirectory(oldWorkingDirectory, WorkingDirectory);
-                                Refresh();
-                            }
-                            */
                             //Otherwise try to resume from where we left off
                             else
                             {
@@ -278,12 +269,7 @@ namespace FileSplitter
                         return;
                 }
                 #endregion
-
-                /*See MoveWorkingDirectory's comment for more
-                //We can GUARENTEE that the WorkingDirectoryWatcher is set at this point, since enabling will force it to be set
-                if (Enabled)
-                    MoveWorkingDirectory(WorkingDirectoryWatcher.Path, value);
-                */
+                
                 /* Used to be storing the oldWorkingDirectory here too, but that's redundant, since the only way it was hit
                  * was by Enabling, then Disabling, which meant oldWorkingDirectory had already been updated
                  */                
@@ -292,28 +278,11 @@ namespace FileSplitter
                     AutoInit(); //TODO this might cause issues, but I don't see many other options?
             }
         }
-        /*This code was super dangerous and wouldn't work in all cases, so it has been removed.
+        /*Here lies workingDirectory movement, was super dangerous and wouldn't work in all cases.
          * If you want to move a workingdirectory, just disable, move it, redirect, and hit enable.
-        /// <summary>
-        /// Moves the previous at oldPath to the new one at newPath. This method assumes that WorkingDirectoryWatcher != null
-        /// </summary>
-        /// <param name="oldPath">the location of the old working directory</param>
-        /// <param name="newPath">the location of the new working directory</param>
-        private void MoveWorkingDirectory(string oldPath, string newPath)
-        {
-            WorkingDirectoryWatcher.EnableRaisingEvents = false;
-
-            ClearDirectory(newPath);
-            FileSystem.MoveDirectory(oldPath, newPath, true); //HACK Maybe replace with custom MoveContents() method?
-            Directory.CreateDirectory(oldPath); //HACK creating the moved directory after it was moved seems messy...
-
-            //WARNING: be sure to ALWAYS make sure _workingDirectory is up to date after running this function, otherwise things could get out of sync
-            WorkingDirectoryWatcher.Path = newPath;
-            WorkingDirectoryWatcher.EnableRaisingEvents = true;
-        }
         */
         
-            /// <summary>
+        /// <summary>
         /// Initilizes the WorkingDirectoryWatcher to whatever the value of WorkingDirectory is, or updates the existing workingdirectorywatcher should one exist
         /// </summary>
         private void UpdateWorkingDirectoryWatcher()
