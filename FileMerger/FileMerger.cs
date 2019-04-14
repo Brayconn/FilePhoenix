@@ -45,7 +45,8 @@ namespace FileMerger
         }
         ulong TotalSize
         {
-            //This will not stay accurate in the rare event the total sub file length is longer than the total file, but unles I do something with remove, (Maybe adding ina a "reset" method that re-imports everything too?) it'll have to do
+            //This will not stay accurate in the rare event the total sub file length is longer than the total file,
+            //but unless I do something with remove, (Maybe adding in a "reset" method that re-imports everything too?) it'll have to do
             //get => (ulong)SubFiles.Sum(x => (long)x.SizeAbsolute);
             get => File.Exists(MasterPath) ? (ulong)new FileInfo(MasterPath).Length : 0;      
         }

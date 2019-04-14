@@ -60,7 +60,7 @@ namespace FileMerger
                 {
                     processed = Encoding.ASCII.GetBytes(@string.Groups[1].Value);
                 }
-                //Bytes begin with
+                //Bytes begin with 0x, or end with h (or neither, assuming the rest of the text is valid hex)
                 else if((hex = Regex.Match(value, "^(?:0x)?([0-9A-F]+)h?$", RegexOptions.IgnoreCase)).Success && hex.Length % 2 == 0)
                 {
                     processed = new byte[hex.Groups[1].Length / 2];
