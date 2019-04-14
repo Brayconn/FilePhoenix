@@ -893,6 +893,8 @@ namespace FileSplitter
                 //TODO Remember to check what causes the filesystemwatcher to trigger
             }
             FileTypeModule.PostSave(tempFile);
+            if(File.Exists(filename))
+                File.Delete(filename);
             File.Move(tempFile, filename);
         }
 
