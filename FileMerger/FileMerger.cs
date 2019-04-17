@@ -10,9 +10,9 @@ using System.Globalization;
 namespace FileMerger
 {
     /// <summary>
-    /// What to do in the event a SubFile's size can't be filled
+    /// What to do in the event a SubFile's length can't be filled
     /// </summary>
-    public enum SizeErrorModes
+    public enum LengthErrorModes
     {
         Truncate,
         FillWithValue
@@ -44,11 +44,11 @@ namespace FileMerger
                 masterWatcher.Filter = Path.GetFileName(value);
             }
         }
-        ulong TotalSize
+        ulong TotalLength
         {
             //This will not stay accurate in the rare event the total sub file length is longer than the total file,
             //but unless I do something with remove, (Maybe adding in a "reset" method that re-imports everything too?) it'll have to do
-            //get => (ulong)SubFiles.Sum(x => (long)x.SizeAbsolute);
+            //get => (ulong)SubFiles.Sum(x => (long)x.LengthAbsolute);
             get => File.Exists(MasterPath) ? (ulong)new FileInfo(MasterPath).Length : 0;      
         }
 
@@ -161,18 +161,18 @@ namespace FileMerger
                     SubFiles[i].OffsetSelection = (TypeSelections)value;
             }
         }
-        [Category("General"), Description("Sets the size type selection of ALL SubFiles"), TypeConverter(typeof(TypeSelectionTypeConverter))]
-        public TypeSelections? SizeType
+        [Category("General"), Description("Sets the length type selection of ALL SubFiles"), TypeConverter(typeof(TypeSelectionTypeConverter))]
+        public TypeSelections? LengthType
         {
             get
             {
                 if (SubFiles.Count <= 0)
                     return null;
 
-                TypeSelections output = SubFiles[0].SizeSelection;
+                TypeSelections output = SubFiles[0].LengthSelection;
                 for (int i = 1; i < SubFiles.Count; i++)
                 {
-                    if (SubFiles[i].SizeSelection != output)
+                    if (SubFiles[i].LengthSelection != output)
                         return null;
                 }
                 return output;
@@ -182,7 +182,7 @@ namespace FileMerger
                 if (value == null)
                     return;
                 for (int i = 0; i < SubFiles.Count; i++)
-                    SubFiles[i].SizeSelection = (TypeSelections)value;
+                    SubFiles[i].LengthSelection = (TypeSelections)value;
             }
         }
         
@@ -220,13 +220,13 @@ namespace FileMerger
         /// </summary>
         private void UpdatePercents()
         {
-            ulong length = TotalSize;
+            ulong length = TotalLength;
             for(int i = 0; i < SubFiles.Count; i++)
             {
                 if (length > 0)
                 {
                     SubFiles[i].OffsetPercent = SubFiles[i].OffsetAbsolute > 0 ? decimal.Divide(SubFiles[i].OffsetAbsolute, length) : 0;
-                    SubFiles[i].SizePercent = SubFiles[i].SizeAbsolute > 0 ? decimal.Divide(SubFiles[i].SizeAbsolute, length) : 0;
+                    SubFiles[i].LengthPercent = SubFiles[i].LengthAbsolute > 0 ? decimal.Divide(SubFiles[i].LengthAbsolute, length) : 0;
                 }
             }
         }
@@ -242,7 +242,7 @@ namespace FileMerger
                     break;
                 case ListChangedType.ItemAdded:
                     //Updates the offset for new items
-                    list[e.NewIndex].OffsetAbsolute = TotalSize;
+                    list[e.NewIndex].OffsetAbsolute = TotalLength;
                     //Write the files to the file
                     using (FileStream master = new FileStream(MasterPath, FileMode.Append, FileAccess.Write))
                         using (FileStream sub = new FileStream(list[e.NewIndex].Path, FileMode.Open, FileAccess.Read))
@@ -280,26 +280,26 @@ namespace FileMerger
                     //ulong seek
                     while ((ulong)br.BaseStream.Position != SubFiles[i].OffsetAbsolute)
                         br.BaseStream.Seek(SubFiles[i].OffsetAbsolute.CompareTo((ulong)br.BaseStream.Position), SeekOrigin.Current);
-                    //Calculate real size
-                    if(SubFiles[i].SizeSelection == TypeSelections.Percent)
-                        SubFiles[i].SizeAbsolute = CalculateAbsoluteAndLimit(SubFiles[i].SizePercent, br.BaseStream.Length, SubFiles[i].SizeLimit ?? ulong.MaxValue);
+                    //Calculate real length
+                    if(SubFiles[i].LengthSelection == TypeSelections.Percent)
+                        SubFiles[i].LengthAbsolute = CalculateAbsoluteAndLimit(SubFiles[i].LengthPercent, br.BaseStream.Length, SubFiles[i].LengthLimit ?? ulong.MaxValue);
                     //ulong write
                     using (BinaryWriter bw = new BinaryWriter(new FileStream(SubFiles[i].Path, FileMode.Truncate, FileAccess.Write)))
                     {
                         int fillIncrement = 0;
-                        for (ulong j = 0; j < SubFiles[i].SizeAbsolute; j++)
+                        for (ulong j = 0; j < SubFiles[i].LengthAbsolute; j++)
                         {
                             //Try to read from master file first
                             if (br.BaseStream.Position < br.BaseStream.Length)
                                 bw.Write(br.ReadByte());
                             //If that fails and we're supposed to fill with some value, fill!
-                            else if (SubFiles[i].SizeErrorHandling == SizeErrorModes.FillWithValue)
+                            else if (SubFiles[i].LengthErrorHandling == LengthErrorModes.FillWithValue)
                                 //HACK this is sort of a mess...
                                 bw.Write(SubFiles[i].fillBytes[fillIncrement < SubFiles[i].fillBytes.Length
                                     ? fillIncrement++ 
                                     : fillIncrement = 0]);
                             //Otherwise, stop
-                            else //if (SubFiles[i].SizeErrorHandling == SizeErrorModes.Truncate)
+                            else //if (SubFiles[i].LengthErrorHandling == LengthErrorModes.Truncate)
                                 break;
                         }
                     }                    

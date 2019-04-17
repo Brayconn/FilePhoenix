@@ -42,8 +42,8 @@ namespace FileMerger
 
         #region Error Handling
 
-        [Category("Error Handling"), Description("What to do in the event the file isn't able to be filled to the specified size.")]
-        public SizeErrorModes SizeErrorHandling { get; set; }
+        [Category("Error Handling"), Description("What to do in the event the file isn't able to be filled to the specified length.")]
+        public LengthErrorModes LengthErrorHandling { get; set; }
         internal byte[] fillBytes = new byte[0];
         string fillString;
         [Category("Error Handling"), Description("What value to use when filling out the file with the \"FillWithValue\" option." +
@@ -92,9 +92,9 @@ namespace FileMerger
 
         #endregion
 
-        #region Length/Size
+        #region Length
 
-        class SizePicker : TypeConverter
+        class LengthPicker : TypeConverter
         {
             public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => true;
 
@@ -149,24 +149,24 @@ namespace FileMerger
                     return base.ConvertTo(context, culture, value, destinationType);
             }
         }
-        [Category("Length"), Description("The upper limit on how big this file should get (make sure this is bigger than SizeAbsolute, or \"None\")."), DefaultValue(null), TypeConverter(typeof(SizePicker))]
-        public ulong? SizeLimit { get; set; } = null;
+        [Category("Length"), Description("The upper limit on how big this file should get (make sure this is bigger than LengthAbsolute, or \"None\")."), DefaultValue(null), TypeConverter(typeof(LengthPicker))]
+        public ulong? LengthLimit { get; set; } = null;
         [Category("Length"), Description("Which value to use when calculating the length of this file's data."), DefaultValue(TypeSelections.Absolute)]
-        public TypeSelections SizeSelection { get; set; } = TypeSelections.Absolute;
+        public TypeSelections LengthSelection { get; set; } = TypeSelections.Absolute;
         [Category("Length"), Description("The length of this file's data, as a percent of the total file length")]
-        public decimal SizePercent { get; internal set; } = 0;
+        public decimal LengthPercent { get; internal set; } = 0;
         [Category("Length"), Description("The length of this file's data.")]
-        public ulong SizeAbsolute { get; set; }
+        public ulong LengthAbsolute { get; set; }
 
         #endregion
 
-        //TODO maybe add destination offsets/sizes? might be too nuanced
+        //TODO maybe add destination offsets/lengths? might be too nuanced
 
         public SubFile(string path)
         {
             Path = path;
-            SizeAbsolute = (ulong)new FileInfo(path).Length;
-            SizeLimit = DefaultValues.Concat(new[] { SizeAbsolute }).First(x => x >= SizeAbsolute);
+            LengthAbsolute = (ulong)new FileInfo(path).Length;
+            LengthLimit = DefaultValues.Concat(new[] { LengthAbsolute }).First(x => x >= LengthAbsolute);
         }
 
         public override string ToString() => Path;
