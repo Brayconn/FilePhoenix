@@ -263,7 +263,7 @@ namespace FileMerger
         /// <returns>The new absolute value</returns>
         private ulong CalculateAbsoluteAndLimit(decimal percent, long length, ulong limit)
         {
-            return Math.Min((ulong)Math.Round((percent * length) / 100, MidpointRounding.ToEven), limit);
+            return Math.Min((ulong)Math.Round(percent * length, MidpointRounding.ToEven), limit);
         }
         private void Export(object sender, ElapsedEventArgs e)
         {
