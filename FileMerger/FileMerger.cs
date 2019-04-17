@@ -154,14 +154,16 @@ namespace FileMerger
         }
 
         /// <summary>
-        /// Calculates the absolute value of the given percent and length
+        /// Calculates the absolute value of the given percent and length, and limits that value to a maximum
         /// </summary>
         /// <param name="percent"></param>
         /// <param name="length"></param>
+        /// <param name="limit"></param>
         /// <returns>The new absolute value</returns>
-        private ulong CalculateAbsolute(decimal percent, long length)
-        => (ulong)Math.Round((percent * length) / 100, MidpointRounding.ToEven);
-
+        private ulong CalculateAbsoluteAndLimit(decimal percent, long length, ulong limit)
+        {
+            return Math.Min((ulong)Math.Round((percent * length) / 100, MidpointRounding.ToEven), limit);
+        }
         private void Export(object sender, ElapsedEventArgs e)
         {
             if (!Enabled)
@@ -172,17 +174,14 @@ namespace FileMerger
                 {
                     //Calculate real offset
                     if (SubFiles[i].OffsetSelection == TypeSelections.Percent)
-                        SubFiles[i].OffsetAbsolute = CalculateAbsolute(SubFiles[i].OffsetPercent, br.BaseStream.Length);
+                        SubFiles[i].OffsetAbsolute = CalculateAbsoluteAndLimit(SubFiles[i].OffsetPercent, br.BaseStream.Length, (ulong)br.BaseStream.Length);
                     //TODO another instances where ulongs are kind of annoying...
                     //ulong seek
                     while ((ulong)br.BaseStream.Position != SubFiles[i].OffsetAbsolute)
                         br.BaseStream.Seek(SubFiles[i].OffsetAbsolute.CompareTo((ulong)br.BaseStream.Position), SeekOrigin.Current);
                     //Calculate real size
                     if(SubFiles[i].SizeSelection == TypeSelections.Percent)
-                        SubFiles[i].SizeAbsolute = Math.Min(
-                            CalculateAbsolute(SubFiles[i].SizePercent, br.BaseStream.Length),
-                            SubFiles[i].SizeLimit ?? ulong.MaxValue //Limiting the size
-                            );
+                        SubFiles[i].SizeAbsolute = CalculateAbsoluteAndLimit(SubFiles[i].SizePercent, br.BaseStream.Length, SubFiles[i].SizeLimit ?? ulong.MaxValue);
                     //ulong write
                     using (BinaryWriter bw = new BinaryWriter(new FileStream(SubFiles[i].Path, FileMode.Truncate, FileAccess.Write)))
                     {
