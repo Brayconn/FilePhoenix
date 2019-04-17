@@ -5,6 +5,7 @@ using System.Drawing.Design;
 using System.Timers;
 using System.ComponentModel.Design;
 using System.Windows.Forms;
+using System.Globalization;
 
 namespace FileMerger
 {
@@ -85,6 +86,106 @@ namespace FileMerger
         [Category("General"), Description("How long to wait before exporting"), DefaultValue(1000)]
         public uint UpdateDelay { get => (uint)UpdateTimer.Interval; set => UpdateTimer.Interval = value; }
 
+        class TypeSelectionTypeConverter : TypeConverter
+        {
+            public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => true;
+
+            public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context) => new StandardValuesCollection(new TypeSelections[]
+            {
+                TypeSelections.Absolute,
+                TypeSelections.Percent
+            });            
+
+            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+            {
+                return (sourceType == typeof(string)) || base.CanConvertFrom(context, sourceType);
+            }
+
+            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+            {
+                if (value is string parsed)
+                {
+                    parsed = parsed.ToLower();
+                    switch(parsed)
+                    {
+                        case ("absolute"):
+                            return TypeSelections.Absolute;
+                        case ("percent"):
+                            return TypeSelections.Percent;
+                    }
+                }
+                return null;
+            }
+
+            public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+            {
+                return (destinationType == typeof(string)) || base.CanConvertTo(context, destinationType);
+            }
+
+            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+            {
+                TypeSelections? parsed = value as TypeSelections?;
+                switch (parsed)
+                {
+                    case (TypeSelections.Absolute):
+                        return "Absolute";
+                    case (TypeSelections.Percent):
+                        return "Percent";
+                    default:
+                        return "Various";
+                }
+            }
+        }
+        //TODO maybe try and reduce copy/paste here? Pretty minor...
+        [Category("General"), Description("Sets the offset type selection of ALL SubFiles"), TypeConverter(typeof(TypeSelectionTypeConverter))]
+        public TypeSelections? OffsetType
+        {
+            get
+            {
+                if (SubFiles.Count <= 0)
+                    return null;
+
+                TypeSelections output = SubFiles[0].OffsetSelection;
+                for(int i = 1; i < SubFiles.Count; i++)
+                {
+                    if (SubFiles[i].OffsetSelection != output)
+                        return null;
+                }
+                return output;
+            }
+            set
+            {
+                if (value == null)
+                    return;
+                for (int i = 0; i < SubFiles.Count; i++)
+                    SubFiles[i].OffsetSelection = (TypeSelections)value;
+            }
+        }
+        [Category("General"), Description("Sets the size type selection of ALL SubFiles"), TypeConverter(typeof(TypeSelectionTypeConverter))]
+        public TypeSelections? SizeType
+        {
+            get
+            {
+                if (SubFiles.Count <= 0)
+                    return null;
+
+                TypeSelections output = SubFiles[0].SizeSelection;
+                for (int i = 1; i < SubFiles.Count; i++)
+                {
+                    if (SubFiles[i].SizeSelection != output)
+                        return null;
+                }
+                return output;
+            }
+            set
+            {
+                if (value == null)
+                    return;
+                for (int i = 0; i < SubFiles.Count; i++)
+                    SubFiles[i].SizeSelection = (TypeSelections)value;
+            }
+        }
+        
         public FileMerger(string masterPath, params string[] subPaths)
         {
             //Deleting the file initially to start off with a clean slate (otherwise the Append later on will cause weirdness)
