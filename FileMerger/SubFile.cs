@@ -86,7 +86,7 @@ namespace FileMerger
         [Category("Offset"), Description("Which value to use when calculating the offset for this file's data."), DefaultValue(TypeSelections.Absolute)]
         public TypeSelections OffsetSelection { get; set; } = TypeSelections.Absolute;
         [Category("Offset"), Description("The offset of this file's data, as a percent of the total file length.")]
-        public decimal OffsetPercent { get; internal set; } = 0;
+        public decimal OffsetPercent { get; set; } = 0;
         [Category("Offset"), Description("The offset of this file's data.")]
         public ulong OffsetAbsolute { get; set; }
 
@@ -154,7 +154,7 @@ namespace FileMerger
         [Category("Length"), Description("Which value to use when calculating the length of this file's data."), DefaultValue(TypeSelections.Absolute)]
         public TypeSelections LengthSelection { get; set; } = TypeSelections.Absolute;
         [Category("Length"), Description("The length of this file's data, as a percent of the total file length")]
-        public decimal LengthPercent { get; internal set; } = 0;
+        public decimal LengthPercent { get; set; } = 0;
         [Category("Length"), Description("The length of this file's data.")]
         public ulong LengthAbsolute { get; set; }
 
