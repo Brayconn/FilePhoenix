@@ -1,5 +1,5 @@
 # FileSplitter
-FileSplitter is the main component of FilePhoenix.
+FileSplitter is the main component of FilePhoenix, it's the part that does the actual splitting of your file.
 If you're looking at the Main or Options tab, you're dealing with FileSplitter.
 
 ## Delay Time
@@ -20,9 +20,9 @@ From there you can continue setting everything up manually, or use quick start.
 
 ## Flattening and Reloading
 The "Flatten and Reload" button will save your file to a temporary location and parse the resulting file anew.
-This can be useful in cases where FilePhoenix looses track of how a file would really be parsed when whole.
+This can be useful in cases where FilePhoenix loses track of how a file would really be parsed when whole.
 However, it is important that you set any File Type Module options that concern opening files to some version of "dynamic".
-Failing to do this could at best make no difference at all, or at worst, could result in the file being read incorrectly, thus leaving you with the same (or a bigger!) mess than you started with.
+Failing to do this could, at best, make no difference at all, or, at worst, could result in the file being read incorrectly, thus leaving you with the same (or a bigger!) mess than you started with.
 
 ## Chaining Files
 Fun fact: you can chain multiple instances of FilePhoenix together.
@@ -54,7 +54,7 @@ For the rest of this subsection, lets assume that we have two files we want to m
 Both File A and File B will be merged into "File C"
 
 ## Percents vs Absolute
-When choosing what offset your SubFile should appear at, you have a few options.
+When choosing where in the Master File your SubFile should appear at, you have a few options.
 One way is to explicitly state the offset or size you want.
 This is fine if you don't plan on changing the length of your file, but what if you do?
 Well, you can use percents (by swapping over SizeSelection or OffsetSelection to "Percent")!
@@ -64,6 +64,7 @@ The actual calculation is as follows (for each SubFile):
 
 ## Size Limit
 The SizeLimit lets you... well, limit the size of a SubFile.
+This doesn't do much when using Absolute sizes, but can come in handy when using percents/messing around with the length of the Master File.
 This can be set to any number you want, or "None".
 You can also press the dropdown to see the list of default values- the max values for various sizes of integers.
 
