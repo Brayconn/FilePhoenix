@@ -95,8 +95,7 @@ namespace FileSplitter
                     IsFolderPicker = true
                 })
                 {
-                    if (value.GetType() == typeof(string))
-                        folderPicker.InitialDirectory = Path.GetDirectoryName((string)value);
+                    folderPicker.InitialDirectory = Path.GetDirectoryName(value as string ?? folderPicker.InitialDirectory);
 
                     //TODO another mess of conditionals
                     if (folderPicker.ShowDialog() == CommonFileDialogResult.Ok &&
