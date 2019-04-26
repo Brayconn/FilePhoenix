@@ -7,6 +7,7 @@
     <authors>$author$</authors>
     <owners>$author$</owners>
     <license type="expression">GPL-3.0-or-later</license>
+    <iconUrl>https://github.com/Brayconn/FilePhoenix/blob/master/icon.ico?raw=true</iconUrl>
     <projectUrl>https://github.com/Brayconn/FilePhoenix</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
