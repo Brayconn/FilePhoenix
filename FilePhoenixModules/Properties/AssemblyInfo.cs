@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Brayconn")]
 [assembly: AssemblyProduct("FilePhoenixModules")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
+[assembly: AssemblyCopyright("Copyright © 2019 Brayconn")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
