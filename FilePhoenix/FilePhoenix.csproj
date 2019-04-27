@@ -7,7 +7,7 @@
     <ProjectGuid>{E577CB57-06E3-4335-B0E1-E5460C5CFE55}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>FilePhoenix</RootNamespace>
-    <AssemblyName>Brayconn.FilePhoenix</AssemblyName>
+    <AssemblyName>FilePhoenix</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
