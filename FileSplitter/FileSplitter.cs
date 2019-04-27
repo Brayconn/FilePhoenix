@@ -988,6 +988,7 @@ namespace FileSplitter
 
             //Sorts modules alphabetically
             loadedTypes.Sort((x, y) => ((IFileSplitterModule)Activator.CreateInstance(x)).DisplayName.CompareTo(((IFileSplitterModule)Activator.CreateInstance(y)).DisplayName));
+            loadedTypes = loadedTypes.Distinct().ToList();
 
             //Lists every module by its display name
             LoadedModules = new ReadOnlyDictionary<string, Type>(loadedTypes.ToDictionary(x => ((IFileSplitterModule)Activator.CreateInstance(x)).DisplayName, y => y));
