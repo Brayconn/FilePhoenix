@@ -33,7 +33,7 @@ namespace FilePhoenix
         private readonly FileSplitter.FileSplitter fs;
         private readonly BindingList<FileMerger.FileMerger> fms;
 
-        public FormMain()
+        public FormMain(string[] paths = null)
         {
             InitializeComponent();
 
@@ -45,7 +45,7 @@ namespace FilePhoenix
             fs = new FileSplitter.FileSplitter(
                 //Network graphics chosen arbitrarily
                 typeof(NetworkGraphics).Assembly.GetExportedTypes(),
-                new[] { AppDomain.CurrentDomain.BaseDirectory },
+                paths?.Where(x => Directory.Exists(x)).ToArray(),
                 progress);
             fileSplitterPropertyGrid.SelectedObject = fs;
             fs.VirtualFileUpdated += UpdateList;
