@@ -22,3 +22,5 @@ Want to get started in a hurry? Check out the [Quick Start Guide](QuickStartGuid
 Descriptions on what each feature does can mostly be found in FilePhoenix, but if you like to read, or just want a more detailed explanation, you could also check out these [tips](Tips.md).
 
 The current list of supported file types can be found [here](Filetypes.md).
+
+Got questions? Join the [Discord](https://discord.gg/TGgMFdB)!
