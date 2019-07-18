@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using FileSplitter;
 using FilePhoenix.Extensions;
+using System.Diagnostics;
 
 namespace FilePhoenix.Modules
 {
@@ -85,17 +86,16 @@ namespace FilePhoenix.Modules
              */
 
             public bool Exists;
-            public int ColorResolution;
+            public byte ColorResolution;
             public bool Sort;
-            public int BitsPerEntry;
+            public byte BitsPerEntry;
 
             public PackedGlobalColorTableInfo(byte packed)
             {
-                //TODO use something other than shift
-                Exists = (byte)(packed >> 7) == 1;
-                ColorResolution = ((byte)(packed << 1)) >> 5;
-                Sort = ((byte)(packed << 4)) >> 7 == 1;
-                BitsPerEntry = ((byte)(packed << 5)) >> 5;
+                Exists = (packed & 0b1000_0000) == 0b1000_0000;
+                ColorResolution = (byte)((packed & 0b0111_0000) >> 4);
+                Sort = (packed & 0b0000_1000) == 0b0000_1000;
+                BitsPerEntry = (byte)(packed & 0b0000_0111);
             }
 
             public override string ToString()
@@ -111,26 +111,25 @@ namespace FilePhoenix.Modules
         struct PackedLocalColorTableInfo
         {
             /*
-             *BitsPer.     LCTSort   LGCTExists
-             *V-----V           V     V
+             *ExistsSorted      BitsPer.
+             *V     V           V-----V
              *0  0  0  0     0  0  0  0
-             *         ^-----^     ^
-             *         Reserved   Interlace
+             *   ^     ^-----^ 
+             *InterlaceReserved
              */
 
-            public byte BitsPerEntry;
-            public bool Sort;
-            public bool Interlace;
             public bool Exists;
-
+            public bool Interlace;
+            public bool Sort;
+            public byte BitsPerEntry;
+            
             public PackedLocalColorTableInfo(byte packed)
             {
-                //TODO use different/better operations than shift
-                BitsPerEntry = (byte)(packed >> 5);
+                Exists = (packed & 0b1000_0000) == 0b1000_0000;
+                Interlace = (packed & 0b0100_0000) == 0b0100_0000;
+                Sort = (packed & 0b0010_0000) == 0b0010_0000;
                 //TODO maybe check reserved bits?
-                Sort = (byte)(packed << 5) >> 7 == 1;
-                Interlace = (byte)(packed << 6) >> 7 == 1;
-                Exists = (byte)(packed << 7) >> 7 == 1;
+                BitsPerEntry = (byte)(packed & 0b0000_0111);
             }
 
             public override string ToString()
@@ -145,14 +144,14 @@ namespace FilePhoenix.Modules
 
         struct PackedGraphicsControlInfo
         {
-            private static Dictionary<byte, string> DisposalMethods = new Dictionary<byte, string>()
+            private readonly static ReadOnlyDictionary<byte, string> DisposalMethods = new ReadOnlyDictionary<byte, string>(new Dictionary<byte, string>()
             {
                 { 0, "Unspecified" },
                 { 1, "Don't Dispose" },
                 { 2, "Overwrite With Background Color" },
                 //3 is invalid
                 { 4, "Overwrite With Previous Image" }
-            };
+            });
 
             /*
              *             UserInput  TransparentColor
@@ -168,9 +167,9 @@ namespace FilePhoenix.Modules
 
             public PackedGraphicsControlInfo(byte packed)
             {
-                DisposalMethod = (byte)((byte)(packed << 4) >> 6);
-                UserInput = (byte)(packed << 6) >> 7 == 1;
-                TransparentColor = (byte)(packed << 7) >> 7 == 1;
+                DisposalMethod = (byte)((packed & 0b0000_1100) >> 2);
+                UserInput = (packed & 0b0000_0010) == 0b0000_0010;
+                TransparentColor = (packed & 0b0000_0001) == 0b0000_0001;
             }
 
             public override string ToString()
@@ -182,6 +181,7 @@ namespace FilePhoenix.Modules
             }
         }
 
+        [DebuggerDisplay("Name = {filename[filename.Length-1]}")]
         class GIFFileFragment : FileFragmentReference
         {
             public GIFFileFragment(ulong offset, ulong length, string[] filename, SectionTypes sectionType)
@@ -331,6 +331,8 @@ namespace FilePhoenix.Modules
                 output.Add(new GIFFileFragment(12, 1, new string[] { "Header", "Pixel Aspect Ratio" },
                     Validity.Unknown, SectionTypes.PixelAspectRatio));
 
+                br.BaseStream.Seek(2, SeekOrigin.Current);
+
                 int GCTLength = 3 * (1 << (globalColorTableInfo.BitsPerEntry + 1));
                 if (globalColorTableInfo.Exists)
                 {
@@ -338,8 +340,8 @@ namespace FilePhoenix.Modules
                     output.Add(new GIFFileFragment(13, (ulong)GCTLength,
                         new string[] { "Header", "Global Color Table" },
                         SectionTypes.ColorTable));
+                    br.BaseStream.Seek(GCTLength,SeekOrigin.Current);
                 }
-                br.BaseStream.Seek(13 + GCTLength, SeekOrigin.Begin);
                 
                 //Loop through sections
                 //TODO seperate section counts for extensions and images
