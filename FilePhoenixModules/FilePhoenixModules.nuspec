@@ -11,7 +11,7 @@
     <projectUrl>https://github.com/Brayconn/FilePhoenix</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes></releaseNotes>
+    <releaseNotes>Fixed local color table parsing (GIF)</releaseNotes>
     <copyright>Copyright © 2019 Brayconn</copyright>
     <tags>FilePhoenix FileSplitter Databending Editing Low-level</tags>
 	<dependencies>
